@@ -5,7 +5,6 @@
       den.batteries.define-user
       den.batteries.primary-user
       den.aspects.homebrew
-      den.aspects.apps.alcove
       den.aspects.apps.cmux
       den.aspects.apps.git
       den.aspects.apps.helium
