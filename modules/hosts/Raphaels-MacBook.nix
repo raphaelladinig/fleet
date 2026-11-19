@@ -1,6 +1,6 @@
 { den, ... }:
 {
-  den.aspects.hosts.macbook = {
+  den.aspects.hosts.Raphaels-MacBook = {
     includes = [
       den.aspects.home-manager
       den.aspects.macos
@@ -11,7 +11,7 @@
       {
         networking = {
           computerName = "Raphael’s MacBook";
-          hostName = "macbook";
+          hostName = "Raphaels-MacBook";
           localHostName = "Raphaels-MacBook";
         };
 

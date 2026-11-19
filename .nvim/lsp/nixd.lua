@@ -14,11 +14,11 @@ return {
 			},
 			options = {
 				darwin = {
-					expr = "(builtins.getFlake(toString ./.)).darwinConfigurations.macbook.options",
+					expr = '(builtins.getFlake(toString ./.)).darwinConfigurations."Raphaels-MacBook".options',
 				},
 				home_manager = {
 					expr = [[
-            (builtins.getFlake(toString ./.)).darwinConfigurations.macbook.options.home-manager.users.type.getSubOptions []
+            (builtins.getFlake(toString ./.)).darwinConfigurations."Raphaels-MacBook".options.home-manager.users.type.getSubOptions []
           ]],
 				},
 			},
