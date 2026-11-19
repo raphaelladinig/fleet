@@ -11,6 +11,7 @@
       den.aspects.apps.helium
       den.aspects.apps.keepassxc
       den.aspects.apps.lazygit
+      den.aspects.apps.llm-agents
       den.aspects.apps.neovim
       den.aspects.apps.rex
       den.aspects.apps.fish
@@ -22,9 +23,7 @@
     darwin.homebrew.casks = [
       "affinity"
       "claude"
-      "claude-code@latest"
       "chatgpt"
-      "codex"
       "colemak-dh"
       "hammerspoon"
       "hyperkey"

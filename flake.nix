@@ -27,6 +27,7 @@
       flake = false;
     };
     import-tree.url = "github:denful/import-tree";
+    llm-agents.url = "github:numtide/llm-agents.nix";
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";

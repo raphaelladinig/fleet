@@ -27,6 +27,10 @@ Follow these conventions when changing configuration:
   arguments inside that module's function.
 - Keep app packages and configuration together under `modules/apps/`.
   Declare shared dependencies through the app aspect's `includes`.
+- Install macOS GUI apps as Homebrew casks and CLI tools from Nix. Claude Code
+  and Codex come from numtide's `llm-agents` flake in `modules/apps/llm-agents.nix`,
+  which leaves its nixpkgs unfollowed so numtide's binary cache matches. Run
+  `nix flake update llm-agents` to pick up new releases.
 - Keep shared nixpkgs settings in `modules/nixpkgs.nix`; its `perSystem` package
   set and Darwin aspect use the same configuration and overlays.
 - Declare cross-aspect `dotfiles.*` flags in `modules/defaults.nix` so consumers
