@@ -42,6 +42,13 @@
       "istat-menus"
       "finetune"
       "libreoffice"
+      "anki"
+      "betterdisplay"
+      "iina"
+      "shottr"
+      "signal"
+      "vesktop"
+      "whatsapp"
     ];
 
     darwin.homebrew.masApps = {
@@ -53,20 +60,13 @@
       { pkgs, ... }:
       {
         home.packages = with pkgs; [
-          anki-bin
-          betterdisplay
           btop
           fastfetch
           gh
-          iina
           just
           nh
-          shottr
-          signal-desktop
           tokei
           typst
-          vesktop
-          whatsapp-for-mac
         ];
       };
   };
