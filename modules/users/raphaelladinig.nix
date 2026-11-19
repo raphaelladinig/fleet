@@ -12,6 +12,7 @@
       den.aspects.apps.keepassxc
       den.aspects.apps.lazygit
       den.aspects.apps.neovim
+      den.aspects.apps.rex
       den.aspects.apps.fish
       den.aspects.ai.agents-md
       den.aspects.ai.skills
