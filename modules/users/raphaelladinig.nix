@@ -40,7 +40,6 @@
       "t3-code@nightly"
       "istat-menus"
       "finetune"
-      "libreoffice"
       "anki"
       "betterdisplay"
       "iina"
