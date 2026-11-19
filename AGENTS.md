@@ -28,7 +28,9 @@ internals file for an area before changing it.
   and skips paths under a `_`-prefixed directory.
 - `modules/hosts/` and `modules/users/` select the aspects each host and user
   gets.
-- `modules/apps/` keeps each app's packages and configuration together.
+- `modules/apps/` keeps each app's packages and configuration together. Apps
+  without configuration go in a group aspect by purpose, such as `apps.media`
+  or `apps.utilities`. Give an app its own aspect once it gains configuration.
 - `modules/macos/` holds macOS system settings.
 - `modules/ai/` installs agent instructions and skills.
   `modules/ai/agents-md/AGENTS.md` is the global instruction file it links into
