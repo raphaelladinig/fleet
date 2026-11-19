@@ -16,8 +16,10 @@ def merge(target, settings):
 
 
 def main():
-    path = Path(sys.argv[1])
-    settings = json.loads(Path(sys.argv[2]).read_text())
+    check = sys.argv[1:2] == ["--check"]
+    arguments = sys.argv[2:] if check else sys.argv[1:]
+    path = Path(arguments[0])
+    settings = json.loads(Path(arguments[1]).read_text())
     if path.is_symlink():
         raise ValueError(f"Refusing to replace symlink: {path}")
     original = path.read_text() if path.exists() else "{}"
@@ -29,6 +31,8 @@ def main():
         json.loads(original), sort_keys=True
     ):
         return
+    if check:
+        sys.exit(1)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = None
     try:

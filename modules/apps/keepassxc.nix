@@ -12,7 +12,7 @@
       ...
     }:
     let
-      warnPreferencesSkipped = import ../_lib/app-preferences-warning.nix { inherit lib; };
+      inherit (import ../_lib/quit-app.nix { inherit lib; }) quitApp reopenApps;
       keepassxcSettings = {
         General = {
           URLDoubleClickAction = 2;
@@ -43,26 +43,58 @@
         config_file="$config_dir/keepassxc.ini"
         temporary="$(/usr/bin/mktemp -t keepassxc-settings)"
         staged=""
-        trap '/bin/rm -f "$temporary"; if [[ -n "$staged" ]]; then /bin/rm -f "$staged"; fi' EXIT
+        app_preferences_reopen=()
+        cleanup() {
+          /bin/rm -f "$temporary"
+          if [[ -n "$staged" ]]; then /bin/rm -f "$staged"; fi
+          ${reopenApps { }}
+        }
+        trap cleanup EXIT
 
         if [[ -e "$config_file" && ! -f "$config_file" && ! -L "$config_file" ]]; then
           echo "Refusing to replace non-file KeePassXC settings: $config_file" >&2
           exit 1
         fi
 
-        if [[ -f "$config_file" || -L "$config_file" ]]; then
-          /bin/cp "$config_file" "$temporary"
+        # Called outside conditions so set -e still stops on failures.
+        merge_settings() {
+          settings_changed=true
+          : > "$temporary"
+          if [[ -f "$config_file" || -L "$config_file" ]]; then
+            /bin/cp "$config_file" "$temporary"
+          fi
+
+          ${pkgs.crudini}/bin/crudini --merge "$temporary" < ${settingsFile}
+
+          if [[ -f "$config_file" && ! -L "$config_file" ]]; then
+            if /usr/bin/cmp -s "$temporary" "$config_file"; then
+              settings_changed=false
+            elif [[ $? -ne 1 ]]; then
+              echo "Could not compare KeePassXC settings: $config_file" >&2
+              exit 1
+            fi
+          fi
+        }
+
+        merge_settings
+        if [[ "$settings_changed" == false ]]; then
+          exit 0
         fi
 
-        ${pkgs.crudini}/bin/crudini --merge "$temporary" < ${settingsFile}
+        if ! ${
+          quitApp {
+            processName = "KeePassXC";
+            bundleId = "org.keepassxc.keepassxc";
+            uid = "$(id -u)";
+          }
+        }; then
+          exit 0
+        fi
 
-        if [[ -f "$config_file" && ! -L "$config_file" ]]; then
-          if /usr/bin/cmp -s "$temporary" "$config_file"; then
-            exit 0
-          elif [[ $? -ne 1 ]]; then
-            echo "Could not compare KeePassXC settings: $config_file" >&2
-            exit 1
-          fi
+        # KeePassXC may save its settings while quitting.
+        merge_settings
+        if [[ "$settings_changed" == false ]]; then
+          exit 0
         fi
 
         mkdir -p "$config_dir"
@@ -76,9 +108,7 @@
 
       home.activation.configureKeePassXCSettings = lib.mkIf config.dotfiles.keepassxc.enable (
         config.lib.dag.entryAfter [ "linkGeneration" ] ''
-          if /usr/bin/pgrep -x -u "$(id -u)" KeePassXC >/dev/null; then
-            ${warnPreferencesSkipped "KeePassXC"}
-          elif ! run ${applySettings}; then
+          if ! run ${applySettings}; then
             echo 'Warning: could not update KeePassXC settings. Fix the error and run `just switch` again to apply them.' >&2
           fi
         ''

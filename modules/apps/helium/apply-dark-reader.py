@@ -1,5 +1,7 @@
 import json
+import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 import plyvel
@@ -48,26 +50,41 @@ def migrate_site_lists(database, sync):
     return settings
 
 
+def pending_settings(database, sync):
+    settings = {b"enabledByDefault": b"false"}
+    version = json.loads(database.get(b"schemeVersion") or b"0") or 0
+    if int(version) < 2:
+        # Preserve list meanings before enforcing the new mode.
+        settings.update(migrate_site_lists(database, sync))
+    return {key: value for key, value in settings.items() if database.get(key) != value}
+
+
 def main():
-    profile = Path(sys.argv[1])
+    check = sys.argv[1:2] == ["--check"]
+    profile = Path(sys.argv[-1])
     extension_id = "eimadpbcbfnmbkopoojfekhnkhdbieeh"
     for storage in ("Local Extension Settings", "Sync Extension Settings"):
         path = profile / storage / extension_id
+        sync = storage == "Sync Extension Settings"
         if path.is_symlink():
             raise ValueError(f"Refusing to open symlink: {path}")
+        if check:
+            if not path.is_dir():
+                sys.exit(1)
+            # Read a copy because a running Helium holds the database lock.
+            with tempfile.TemporaryDirectory() as directory:
+                copy = Path(directory) / "database"
+                shutil.copytree(path, copy, ignore=shutil.ignore_patterns("LOCK"))
+                with plyvel.DB(str(copy)) as database:
+                    if pending_settings(database, sync):
+                        sys.exit(1)
+            continue
         path.parent.mkdir(parents=True, exist_ok=True)
         with plyvel.DB(str(path), create_if_missing=True) as database:
-            settings = {b"enabledByDefault": b"false"}
-            version = json.loads(database.get(b"schemeVersion") or b"0") or 0
-            if int(version) < 2:
-                # Preserve list meanings before enforcing the new mode.
-                settings.update(
-                    migrate_site_lists(database, storage == "Sync Extension Settings")
-                )
+            settings = pending_settings(database, sync)
             with database.write_batch(sync=True) as batch:
                 for key, value in settings.items():
-                    if database.get(key) != value:
-                        batch.put(key, value)
+                    batch.put(key, value)
 
 
 if __name__ == "__main__":
