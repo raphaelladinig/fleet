@@ -12,6 +12,6 @@ alias lt 'eza --tree --level=2 --icons'
 zoxide init fish | source
 direnv hook fish | source
 
-# bun
+# Global Bun packages; append so the Nix-managed bun stays first.
 set --export BUN_INSTALL "$HOME/.bun"
-fish_add_path --global "$BUN_INSTALL/bin"
+fish_add_path --global --path --append "$BUN_INSTALL/bin"
