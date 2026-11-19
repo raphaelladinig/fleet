@@ -13,13 +13,18 @@
       ...
     }:
     let
-      warnPreferencesSkipped = import ../../_lib/app-preferences-warning.nix { inherit lib; };
+      inherit (import ../../_lib/quit-app.nix { inherit lib; }) quitApp;
       user = config.system.primaryUser;
       userDataDir = "${config.users.users.${user}.home}/Library/Application Support/net.imput.helium";
       asUser =
         command:
         ''launchctl asuser "$(id -u -- ${lib.escapeShellArg user})" sudo --user=${lib.escapeShellArg user} --set-home -- ${command}'';
       extensionPython = pkgs.python3.withPackages (ps: [ ps.plyvel ]);
+      applyPreferences = asUser "${pkgs.python3}/bin/python3 ${./apply-preferences.py}";
+      applyDarkReader = asUser "${extensionPython}/bin/python3 ${./apply-dark-reader.py}";
+      preferencesPath = lib.escapeShellArg "${userDataDir}/Default/Preferences";
+      localStatePath = lib.escapeShellArg "${userDataDir}/Local State";
+      profilePath = lib.escapeShellArg "${userDataDir}/Default";
     in
     {
       homebrew.casks = [ "helium-browser" ];
@@ -39,20 +44,27 @@
       };
 
       system.activationScripts.postActivation.text = lib.mkAfter ''
-        if /usr/bin/pgrep -x -u "$(id -u -- ${lib.escapeShellArg user})" Helium >/dev/null; then
-          ${warnPreferencesSkipped "Helium"}
-        else
-          if ! ${asUser "${pkgs.python3}/bin/python3 ${./apply-preferences.py}"} \
-            ${lib.escapeShellArg "${userDataDir}/Default/Preferences"} ${./preferences.json}; then
-            printf '%s\n' ${lib.escapeShellArg "Could not apply Helium preferences at ${userDataDir}/Default/Preferences. Check the error above, fix access or file contents, and run `just switch` again with Helium closed."} >&2
+        # Helium rewrites these files while running, so quit it only when they differ.
+        if ! {
+          ${applyPreferences} --check ${preferencesPath} ${./preferences.json} 2>/dev/null &&
+            ${applyPreferences} --check ${localStatePath} ${./local-state.json} 2>/dev/null &&
+            ${applyDarkReader} --check ${profilePath} 2>/dev/null
+        } && ${
+          quitApp {
+            processName = "Helium";
+            bundleId = "net.imput.helium";
+            uid = "$(id -u -- ${lib.escapeShellArg user})";
+            run = asUser;
+          }
+        }; then
+          if ! ${applyPreferences} ${preferencesPath} ${./preferences.json}; then
+            printf '%s\n' ${lib.escapeShellArg "Could not apply Helium preferences at ${userDataDir}/Default/Preferences. Check the error above, fix access or file contents, and run `just switch` again."} >&2
           fi
-          if ! ${asUser "${pkgs.python3}/bin/python3 ${./apply-preferences.py}"} \
-            ${lib.escapeShellArg "${userDataDir}/Local State"} ${./local-state.json}; then
-            printf '%s\n' ${lib.escapeShellArg "Could not apply Helium Local State at ${userDataDir}/Local State. Check the error above, fix access or file contents, and run `just switch` again with Helium closed."} >&2
+          if ! ${applyPreferences} ${localStatePath} ${./local-state.json}; then
+            printf '%s\n' ${lib.escapeShellArg "Could not apply Helium Local State at ${userDataDir}/Local State. Check the error above, fix access or file contents, and run `just switch` again."} >&2
           fi
-          if ! ${asUser "${extensionPython}/bin/python3 ${./apply-dark-reader.py}"} \
-            ${lib.escapeShellArg "${userDataDir}/Default"}; then
-            printf '%s\n' ${lib.escapeShellArg "Could not apply Helium Dark Reader settings under ${userDataDir}/Default. Check the error above, fix access or close processes using its extension databases, and run `just switch` again with Helium closed."} >&2
+          if ! ${applyDarkReader} ${profilePath}; then
+            printf '%s\n' ${lib.escapeShellArg "Could not apply Helium Dark Reader settings under ${userDataDir}/Default. Check the error above, fix access or close processes using its extension databases, and run `just switch` again."} >&2
           fi
         fi
       '';

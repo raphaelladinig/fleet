@@ -44,25 +44,35 @@ local time. It deletes generations older than 30 days and collects unreferenced
 store paths. The current generation remains protected. The same job runs store
 optimisation after garbage collection succeeds to deduplicate identical files.
 
+Apps with managed preferences are quit before writing and reopened in the
+background afterwards. `modules/_lib/quit-app.nix` provides `quitApp`, which
+quits a running app through its bundle ID, waits up to 30 seconds, and queues it
+in `app_preferences_reopen`. `reopenApps` reopens the queue. Quit an app only
+after checking that its settings differ, so unchanged apps keep running. If an
+app does not quit, the helper warns once per app and the writers skip it.
+macOS may ask the terminal for Automation permission the first time.
+
 For macOS app preferences, use `dotfiles.appPreferences` from
 `modules/app-preferences.nix` for scalar defaults. Preserve its behavior of
-checking both value and scalar type, skipping open apps, and telling the user to
-quit and reapply. Compare strings through `defaults export` and the declared
+checking both value and scalar type and quitting the app only when a value
+differs. `bundleId` defaults to `domain`. The Darwin activation reopens quit apps
+after all preference writers have run. Compare strings through `defaults export` and the declared
 Python's plist parser, using literal dictionary keys. `defaults read` display
 escaping varies by macOS version and shell command substitution strips trailing
 newlines. Mistyped keys are removed before rewriting because `defaults`
 can preserve the old numeric type for equal values. For app-owned
 configuration files, follow
-`modules/apps/keepassxc.nix`: merge managed keys while preserving other settings
-and skip writes while the app is running.
+`modules/apps/keepassxc.nix`: merge managed keys while preserving other settings,
+quit the app only when the merge changes the file, and merge again after quitting
+because the app may save its settings on exit.
 KeePassXC merges settings in a separate script so failures stop the merge even
-when Home Manager catches its exit status. Failed updates warn and continue
+when Home Manager catches its exit status. The script reopens KeePassXC on exit. Failed updates warn and continue
 activation. Stage replacements beside the destination before renaming them to
 preserve existing settings on failure. Home Manager dry runs skip the script.
 
 The macOS "AutoFill Passwords and Passkeys" toggle is managed in
 `modules/macos/default.nix` through `com.apple.Safari.AutoFillPasswords`.
-It uses the app-preferences helper to skip writes while Safari is open.
+It uses the app-preferences helper, which quits Safari when the value differs.
 Writing Safari's protected preferences may require Full Disk Access for the
 terminal running activation.
 Failed preference writes print a warning and allow activation to continue. Fix
@@ -70,13 +80,14 @@ access and reapply to enforce any settings that could not be written.
 
 Helium's `preferences.json` and `local-state.json` contain curated settings, not
 profile exports. Keep account data, history, identifiers, and extension state out
-of these files. Darwin activation merges them as the primary user only while Helium
-is closed. All Helium preference writers run in the same activation shell so the
-shared warning helper emits one reminder per app. Search uses
+of these files. Darwin activation runs each writer with `--check` first. When any
+reports a difference, it quits Helium and merges them as the primary user. All
+Helium preference writers run in the same activation shell so the quit helper
+quits Helium at most once and emits one warning per app. Search uses
 macOS recommended policies to avoid editing protected search preferences.
 Each Python preference writer warns on failure and lets the remaining writers
 and activation continue. Fix the reported access, file contents, or database
-lock issue and run `just switch` again with Helium closed. Failed writes leave
+lock issue and run `just switch` again. Failed writes leave
 invalid JSON and locked databases intact.
 
 Helium's `extensions.csv` is the source for its macOS `ExtensionInstallForcelist`
@@ -90,7 +101,8 @@ Keep the CSV updated when adding or removing forced extensions. Removing the Nix
 configuration does not uninstall the profile; remove it through Device Management.
 
 Helium's `apply-dark-reader.py` sets Dark Reader to "Invert listed only" in
-the Default profile's local and sync extension stores while Helium is closed.
+the Default profile's local and sync extension stores. Its `--check` mode reads
+copies of the stores because a running Helium holds the LevelDB lock.
 It migrates legacy site lists using their original mode before setting the new
 mode and schema version. It preserves existing modern lists, sync list chunks,
 legacy entries, and unrelated settings. Each store migrates independently so

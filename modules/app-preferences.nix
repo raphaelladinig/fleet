@@ -8,12 +8,16 @@
       ...
     }:
     let
-      warnPreferencesSkipped = import ./_lib/app-preferences-warning.nix { inherit lib; };
-      applyIfClosed =
+      inherit (import ./_lib/quit-app.nix { inherit lib; }) quitApp reopenApps;
+      user = config.system.primaryUser;
+      runAsUser =
+        command:
+        ''launchctl asuser "$(id -u -- ${lib.escapeShellArg user})" sudo --user=${lib.escapeShellArg user} --set-home -- ${command}'';
+      applyPreferences =
         {
           prefix,
-          user,
           domain,
+          bundleId,
           processName,
           preferences,
         }:
@@ -82,9 +86,13 @@
           )}
 
           if [[ "''$${prefix}_preferences_changed" == true ]]; then
-            if /usr/bin/pgrep -x -u "''$${prefix}_user_id" ${lib.escapeShellArg processName} >/dev/null; then
-              ${warnPreferencesSkipped processName}
-            else
+            if ${
+              quitApp {
+                inherit processName bundleId;
+                uid = "''$${prefix}_user_id";
+                run = runAsUser;
+              }
+            }; then
               ${lib.concatStringsSep "\n" (
                 lib.mapAttrsToList (name: value: ''
                   if ! (
@@ -106,46 +114,66 @@
     {
       options.dotfiles.appPreferences = lib.mkOption {
         default = { };
-        description = "Application preferences applied only while the application is closed.";
+        description = "Application preferences applied after quitting the application if it is running.";
         type = lib.types.attrsOf (
-          lib.types.submodule {
-            options = {
-              domain = lib.mkOption {
-                type = lib.types.str;
-                description = "macOS preferences domain.";
+          lib.types.submodule (
+            { config, ... }:
+            {
+              options = {
+                domain = lib.mkOption {
+                  type = lib.types.str;
+                  description = "macOS preferences domain.";
+                };
+                bundleId = lib.mkOption {
+                  type = lib.types.str;
+                  default = config.domain;
+                  defaultText = lib.literalExpression "domain";
+                  description = "Bundle identifier used to quit and reopen the application.";
+                };
+                processName = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Exact process name used to detect whether the application is running.";
+                };
+                preferences = lib.mkOption {
+                  type = lib.types.attrsOf (
+                    lib.types.oneOf [
+                      lib.types.bool
+                      lib.types.int
+                      lib.types.float
+                      lib.types.str
+                    ]
+                  );
+                  default = { };
+                  description = "Preference keys and scalar values to apply.";
+                };
               };
-              processName = lib.mkOption {
-                type = lib.types.str;
-                description = "Exact process name used to detect whether the application is running.";
-              };
-              preferences = lib.mkOption {
-                type = lib.types.attrsOf (
-                  lib.types.oneOf [
-                    lib.types.bool
-                    lib.types.int
-                    lib.types.float
-                    lib.types.str
-                  ]
-                );
-                default = { };
-                description = "Preference keys and scalar values to apply.";
-              };
-            };
-          }
+            }
+          )
         );
       };
 
-      config.system.activationScripts.postActivation.text = lib.mkAfter (
-        lib.concatStringsSep "\n" (
-          lib.mapAttrsToList (
-            name: settings:
-            applyIfClosed {
-              prefix = "app_preferences_${builtins.hashString "sha256" name}";
-              user = config.system.primaryUser;
-              inherit (settings) domain processName preferences;
-            }
-          ) config.dotfiles.appPreferences
-        )
-      );
+      config.system.activationScripts.postActivation.text = lib.mkMerge [
+        (lib.mkBefore "app_preferences_reopen=()")
+        (lib.mkAfter (
+          lib.concatStringsSep "\n" (
+            lib.mapAttrsToList (
+              name: settings:
+              applyPreferences {
+                prefix = "app_preferences_${builtins.hashString "sha256" name}";
+                inherit (settings)
+                  domain
+                  bundleId
+                  processName
+                  preferences
+                  ;
+              }
+            ) config.dotfiles.appPreferences
+          )
+        ))
+        # Reopen apps after every module's writers have run.
+        (lib.mkOrder 2000 (reopenApps {
+          run = runAsUser;
+        }))
+      ];
     };
 }
