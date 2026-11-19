@@ -1,4 +1,39 @@
+{ den, ... }:
 {
+  den.aspects.apps.rex.includes = [
+    den.aspects.app-preferences
+    den.aspects.fonts
+  ];
+
+  den.aspects.apps.rex.darwin.dotfiles.appPreferences.rex = {
+    domain = "com.superlogical.rex";
+    processName = "Rex";
+    preferences = {
+      SUAutomaticallyUpdate = true;
+      SUEnableAutomaticChecks = true;
+      "Workspace.activityGrouping" = "priority";
+      "Workspace.appIcon" = "default";
+      "Workspace.appearance" = "system";
+      "Workspace.darkThemeID" = "roasted-umber";
+      "Workspace.inactivePaneFadeMode" = "both";
+      "Workspace.interfaceStyle" = "blendTheme";
+      "Workspace.lightThemeID" = "peach-veranda";
+      "Workspace.sidebarPosition" = "right";
+      "Workspace.sidebarShowsActivity" = false;
+      "Workspace.sidebarShowsOnlyOnlineHosts" = false;
+      "Workspace.tabIconTintMode" = "off";
+      "Workspace.tabStyle" = "vertical";
+      "Workspace.terminalFontName" = "CaskaydiaCove Nerd Font Mono";
+      "Workspace.terminalFontPointSize" = 15.0;
+      "Workspace.usesGestures" = true;
+      "Workspace.usesPaneGlass" = false;
+      "Workspace.usesStandardInactiveWindowPaneStyles" = true;
+      "rex.server.automatic-restart-enabled" = true;
+      "rex.server.block-plugin-reload-enabled" = false;
+      "rex.server.run-mode" = "bundled";
+    };
+  };
+
   den.aspects.apps.rex.homeManager =
     { pkgs, ... }:
     let

@@ -60,10 +60,10 @@ For macOS app preferences, use `dotfiles.appPreferences` from
 `modules/app-preferences.nix` for scalar defaults. Preserve its behavior of
 checking both value and scalar type and quitting the app only when a value
 differs. `bundleId` defaults to `domain`. The Darwin activation reopens quit apps
-after all preference writers have run. Compare strings through `defaults export` and the declared
+after all preference writers have run. Compare strings and floats through `defaults export` and the declared
 Python's plist parser, using literal dictionary keys. `defaults read` display
-escaping varies by macOS version and shell command substitution strips trailing
-newlines. Mistyped keys are removed before rewriting because `defaults`
+escaping varies by macOS version, shell command substitution strips trailing
+newlines, and `defaults read` prints `15` where Nix renders `15.000000`. Mistyped keys are removed before rewriting because `defaults`
 can preserve the old numeric type for equal values. For app-owned
 configuration files, follow
 `modules/apps/keepassxc.nix`: merge managed keys while preserving other settings,
