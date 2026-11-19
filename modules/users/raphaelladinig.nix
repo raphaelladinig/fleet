@@ -56,12 +56,18 @@
           anki-bin
           betterdisplay
           btop
+          bun
+          cargo
+          clippy
           fastfetch
           gh
           iina
           just
           nh
+          nodejs
           pnpm
+          rustc
+          rustfmt
           shottr
           signal-desktop
           tokei

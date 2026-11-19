@@ -15,6 +15,7 @@
     den.aspects.apps.neovim.langs.markdown
     den.aspects.apps.neovim.langs.nix
     den.aspects.apps.neovim.langs.python
+    den.aspects.apps.neovim.langs.rust
     den.aspects.apps.neovim.langs.typst
     den.aspects.apps.neovim.langs.web
     den.aspects.apps.neovim.langs.xml
