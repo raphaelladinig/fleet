@@ -61,14 +61,17 @@
               ${run "/usr/bin/defaults read-type ${lib.escapeShellArg domain}"} "$1" 2>/dev/null
             )" || return 1
             [[ "$actual_type" == "$3" ]] || return 1
-            if [[ "$3" == "Type is string" ]]; then
-              # defaults read escapes strings differently across macOS versions.
+            if [[ "$3" == "Type is string" || "$3" == "Type is float" ]]; then
+              # defaults read escapes strings differently across macOS versions
+              # and prints floats in a different format than Nix.
               ${run "/usr/bin/defaults export ${lib.escapeShellArg domain} -"} 2>/dev/null |
                 ${lib.getExe pkgs.python3} -c ${lib.escapeShellArg ''
                   import plistlib, sys
                   actual = plistlib.loads(sys.stdin.buffer.read()).get(sys.argv[1])
+                  if sys.argv[3] == "Type is float":
+                      sys.exit(not (type(actual) is float and actual == float(sys.argv[2])))
                   sys.exit(not (type(actual) is str and actual == sys.argv[2]))
-                ''} "$1" "$2" 2>/dev/null
+                ''} "$1" "$2" "$3" 2>/dev/null
             else
               actual="$(
                 ${run "/usr/bin/defaults read ${lib.escapeShellArg domain}"} "$1" 2>/dev/null
