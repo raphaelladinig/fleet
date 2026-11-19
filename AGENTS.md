@@ -47,11 +47,8 @@ quit and reapply. Compare strings through `defaults export` and the declared
 Python's plist parser, using literal dictionary keys. `defaults read` display
 escaping varies by macOS version and shell command substitution strips trailing
 newlines. Mistyped keys are removed before rewriting because `defaults`
-can preserve the old numeric type for equal values. Run the temporary-plist
-regression proof with
-`python3 -m unittest discover -s tests -p test_app_preferences_types.py` on macOS.
-It evaluates the module with the pinned Nix library and Python and never writes
-live app defaults. For app-owned configuration files, follow
+can preserve the old numeric type for equal values. For app-owned
+configuration files, follow
 `modules/apps/keepassxc.nix`: merge managed keys while preserving other settings
 and skip writes while the app is running.
 KeePassXC merges settings in a separate script so failures stop the merge even
@@ -77,13 +74,6 @@ Each Python preference writer warns on failure and lets the remaining writers
 and activation continue. Fix the reported access, file contents, or database
 lock issue and run `just switch` again with Helium closed. Failed writes leave
 invalid JSON and locked databases intact.
-Run `python3 -m unittest discover -s tests -p test_helium_activation.py -v` for
-the focused activation regression tests. They build an isolated activation
-fixture with the pinned Python and plyvel packages and use temporary app data.
-
-For preference-merger changes, run `python3 -B tests/test_helium_preference_types.py`.
-It uses temporary fixtures without reading browser data. Keep `-B` to avoid
-repository bytecode artifacts.
 
 Helium's `extensions.csv` is the source for its macOS `ExtensionInstallForcelist`
 and `ExtensionSettings` toolbar pins. Blank pin values leave pinning unmanaged.
@@ -101,9 +91,6 @@ It migrates legacy site lists using their original mode before setting the new
 mode and schema version. It preserves existing modern lists, sync list chunks,
 legacy entries, and unrelated settings. Each store migrates independently so
 mixed versions and fresh stores keep the declared mode after Dark Reader starts.
-Focused fixtures live in `tests/test_dark_reader_migration.py` and need Python
-with `plyvel`. Set `DARK_READER_SOURCE` to a Dark Reader checkout to also verify
-its startup loader through `tests/dark_reader_startup.mjs` with Node.js.
 
 Git signs commits and tags with the SSH public key in `modules/apps/git.nix`.
 KeePassXC must load the matching private key into the SSH agent before committing.
@@ -114,33 +101,15 @@ adding a feature. Feature modules contribute files through
 Language modules return `{ filetypes, setup }` and initialize on the first
 matching filetype. Keep packages and plugins in Nix and runtime behavior in Lua.
 Keep lazy triggers aligned with bundled server filetypes and formatter mappings.
-Run `python3 tests/neovim_dialects.py` for XML or web dialect changes. It builds
-the managed configuration and checks first-open LSP attachment and formatter
-selection in isolated Neovim processes without activation.
-
 Luacheck captures each buffer's filename and project config directory when lint
-starts. Run `bash tests/neovim_luacheck_context.sh` for its isolated runtime
-regression test with the flake-pinned Neovim, nvim-lint, and Luacheck.
+starts.
 
 Use the recipes in `justfile` for validation and activation:
 
 - Enter `nix develop` when repository tools are missing from the shell.
 - For code or configuration changes, run `just check`. It checks Nix formatting,
-  Fish, JavaScript, and Python syntax, Lua linting and formatting, Python
-  regression tests, isolated Neovim startup, and the flake.
-- `just check-python` compiles Python in memory without source-tree bytecode and
-  discovers standard-library `unittest` tests named `tests/test_*.py`. Keep
-  focused regression tests under `tests/` with defect-specific names.
-  The development shell includes Python with `plyvel` for LevelDB fixtures.
-- `just check-neovim` uses caelum's generated Home Manager config and wrapped
-  editor, plus declared tools for Lua, Python, and Nix. It runs from a temporary
-  working directory with isolated HOME/XDG paths and no editor trust state.
-  It checks lazy language setup, formatters, parsers, completion, and Python DAP.
-  It also runs `tests/neovim_dialects.py` for XML and web dialects and
-  `tests/neovim_luacheck_context.sh` for concurrent linting across projects.
-  It does not activate configuration or download language servers. To diagnose
-  the smoke harness with a fixture, run `nix run .#check-neovim -- <fixture-home>`
-  with generated `.config/nvim` and `.local/share/nvim` trees.
+  Fish, JavaScript, and Python syntax, Lua linting and formatting, and the flake.
+  Python is compiled in memory without writing bytecode to the source tree.
 - For changes to the host configuration, also run `just build caelum` to build
   without activation. Specify the intended host when working on another machine;
   omitting it uses `caelum`. The flake host key is `caelum`; `modules/hosts/caelum.nix`
@@ -155,7 +124,6 @@ GitHub Actions runs `.github/workflows/check.yml` on pull requests, pushes to `m
 and manual dispatch. It runs `just check`, validates the Nix base template, and
 builds `caelum` on an Apple Silicon macOS runner without activation. Keep these
 steps in sync with the validation recipes.
-It also runs the focused app-preference regression suite on macOS 15.
 Check runs in the same concurrency group run one at a time and queue up to 100
 pending runs with `queue: max`.
 
