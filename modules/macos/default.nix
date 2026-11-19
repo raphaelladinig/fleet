@@ -3,11 +3,19 @@
   den.aspects.macos.includes = [ den.aspects.app-preferences ];
 
   den.aspects.macos.darwin =
-    { config, lib, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       userName = config.system.primaryUser;
       homeDirectory = config.users.users.${userName}.home;
-      wallpaper = "${./config/blank.heic}";
+      # Lossless, so the desktop renders exactly #000000.
+      wallpaper = "${pkgs.runCommand "black.png" { nativeBuildInputs = [ pkgs.python3 ]; } ''
+        python3 ${./config/black-png.py} > $out
+      ''}";
       applyWallpaper = "${./config/apply-wallpaper.js}";
       wallpaperStore = "${homeDirectory}/Library/Application Support/com.apple.wallpaper/Store";
     in
