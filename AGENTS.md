@@ -120,13 +120,6 @@ Use the recipes in `justfile` for validation and activation:
 - For documentation-only edits, review the diff and verify referenced paths and
   commands. A Nix rebuild is unnecessary.
 
-GitHub Actions runs `.github/workflows/check.yml` on pull requests, pushes to `main`,
-and manual dispatch. It runs `just check`, validates the Nix base template, and
-builds `caelum` on an Apple Silicon macOS runner without activation. Keep these
-steps in sync with the validation recipes.
-Check runs in the same concurrency group run one at a time and queue up to 100
-pending runs with `queue: max`.
-
 The reusable Nix base lives in `modules/templates/_nix-base` and is exposed
 through `modules/templates/default.nix`. Keep the template under `_nix-base/` so
 import-tree excludes its modules from the parent flake. Keep it general, without
