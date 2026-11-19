@@ -1,6 +1,6 @@
 { den, ... }:
 {
-  den.aspects.hosts.caelum = {
+  den.aspects.hosts.macbook = {
     includes = [
       den.aspects.home-manager
       den.aspects.macos
@@ -10,9 +10,9 @@
       { config, lib, ... }:
       {
         networking = {
-          computerName = "caelum";
-          hostName = "caelum";
-          localHostName = "caelum";
+          computerName = "Raphael’s MacBook";
+          hostName = "macbook";
+          localHostName = "Raphaels-MacBook";
         };
 
         # nix-darwin only applies `users.users.<name>.shell` to accounts it
