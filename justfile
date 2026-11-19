@@ -1,4 +1,4 @@
-host := "macbook"
+host := "Raphaels-MacBook"
 
 default:
     @just --list
