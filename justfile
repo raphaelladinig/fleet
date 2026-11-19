@@ -1,4 +1,4 @@
-host := "caelum"
+host := "macbook"
 
 default:
     @just --list

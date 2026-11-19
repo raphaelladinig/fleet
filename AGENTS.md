@@ -126,11 +126,12 @@ Use the recipes in `justfile` for validation and activation:
 - For code or configuration changes, run `just check`. It checks Nix formatting,
   Fish, JavaScript, and Python syntax, Lua linting and formatting, and the flake.
   Python is compiled in memory without writing bytecode to the source tree.
-- For changes to the host configuration, also run `just build caelum` to build
-  without activation. Specify the intended host when working on another machine;
-  omitting it uses `caelum`. The flake host key is `caelum`; `modules/hosts/caelum.nix`
-  manages the computer name and hostnames as `caelum`.
-- Run `just switch caelum` when the task includes applying the configuration.
+- For changes to the host configuration, also run `just build macbook` to
+  build without activation. Specify the intended host when working on another
+  machine; omitting it uses `macbook`. The flake host key matches the Unix
+  hostname, `macbook`. `modules/hosts/macbook.nix` sets the computer name to
+  `Raphael’s MacBook` and the Bonjour local hostname to `Raphaels-MacBook`.
+- Run `just switch macbook` when the task includes applying the configuration.
   Activation changes the live system and runs Homebrew upgrades and cleanup,
   including removal of packages absent from the declared configuration.
 - For documentation-only edits, review the diff and verify referenced paths and
