@@ -17,8 +17,9 @@ Follow these conventions when changing configuration:
   New files must be tracked by Git to participate in the Git-backed flake.
 - Use `<name>.nix` for standalone modules. For modules with supporting files,
   keep the entry point at `<name>/default.nix` and the supporting files in that
-  directory, as in `modules/ai/skills/default.nix`. When adding supporting files
-  to an existing module, move its entry point and update its relative paths.
+  directory, as in `modules/ai/agents-md/default.nix`. When adding supporting
+  files to an existing module, move its entry point and update its relative
+  paths.
 - Define features under `den.aspects` and compose them with `includes`.
   Discovery makes an aspect available; a host, user, or included aspect must
   select it. Follow `modules/hosts/` and `modules/users/` for that wiring.
@@ -36,8 +37,11 @@ Follow these conventions when changing configuration:
 - Declare cross-aspect `dotfiles.*` flags in `modules/defaults.nix` so consumers
   can read them when the providing aspect is absent. Follow the KeePassXC flag
   pattern. Keep feature-local options in their owning module.
-- Fish, Neovim, AI skills, and agent instructions use Nix-managed files through
+- Fish, Neovim, and agent instructions use Nix-managed files through
   `home.file` with relative source paths. Edits require a rebuild and activation.
+- Agent skills come from t3dotgg's `tstack` flake input. `modules/ai/skills.nix`
+  links every directory under its `skills/` into `~/.claude/skills` and
+  `~/.codex/skills`. Run `nix flake update tstack` to pick up new releases.
 
 `modules/nix-settings.nix` schedules Nix garbage collection daily at 04:00
 local time. It deletes generations older than 30 days and collects unreferenced

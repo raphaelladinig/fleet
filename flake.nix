@@ -31,5 +31,9 @@
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    tstack = {
+      url = "github:t3dotgg/tstack";
+      flake = false;
+    };
   };
 }
