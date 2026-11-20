@@ -48,10 +48,20 @@ vim.diagnostic.config({ virtual_text = true })
 
 -- Trust each project file by content. Directory trust covers only the name, so
 -- .nvim stays off the runtimepath. See :h vim.secure.read().
-local function run_trusted(file)
+-- Errors are reported instead of raised so a broken project file cannot abort
+-- the rest of the config.
+local function run_trusted(file, apply)
   local code = vim.secure.read(file)
-  if code then
-    return assert(load(code, "@" .. file))()
+  if type(code) == "string" then
+    local ok, err = pcall(function()
+      local result = assert(load(code, "@" .. file))()
+      if apply then
+        apply(result)
+      end
+    end)
+    if not ok then
+      vim.notify(err, vim.log.levels.ERROR)
+    end
   end
 end
 
@@ -60,10 +70,9 @@ if exrc_root then
   local exrc_dir = exrc_root .. "/.nvim"
   for name, kind in vim.fs.dir(exrc_dir .. "/lsp") do
     if kind == "file" and name:match("%.lua$") then
-      local config = run_trusted(exrc_dir .. "/lsp/" .. name)
-      if config then
+      run_trusted(exrc_dir .. "/lsp/" .. name, function(config)
         vim.lsp.config(name:sub(1, -5), config)
-      end
+      end)
     end
   end
   run_trusted(exrc_dir .. "/init.lua")
