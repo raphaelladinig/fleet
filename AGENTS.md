@@ -70,7 +70,7 @@ Enter `nix develop` when repository tools are missing from the shell.
 
 | Change | Command |
 | --- | --- |
-| Any code or configuration | `just check` checks Nix formatting, Fish, JavaScript, and Python syntax, Lua linting and formatting, the flake, and the Nix base template |
+| Any code or configuration | `just check` checks Nix formatting, Fish, JavaScript, and Python syntax, Lua linting and formatting, the flake, the Nix base template, and every host's system configuration, evaluated without building |
 | Host configuration | `just check`, then `just build Raphaels-MacBook` to build without activating |
 | Applying the configuration, when the task asks | `just switch Raphaels-MacBook` |
 | Documentation only | Review the diff and verify referenced paths and commands. A rebuild is unnecessary |
@@ -104,7 +104,7 @@ committing.
 
 | File | Read it when you change |
 | --- | --- |
-| [Nix and flake inputs](docs/internals/nix.md) | Flake inputs, `llm-agents`, `tstack` skills, nixpkgs settings, Home Manager backups, garbage collection, or the Nix base template |
+| [Nix and flake inputs](docs/internals/nix.md) | Flake inputs, the `just check` recipe, `llm-agents`, `tstack` skills, nixpkgs settings, Home Manager backups, garbage collection, or the Nix base template |
 | [App preferences](docs/internals/app-preferences.md) | macOS defaults, app-owned settings files, the quit and reopen helpers, KeePassXC settings, or Safari AutoFill |
 | [Helium](docs/internals/helium.md) | Helium preferences, extensions and the device management profile, or Dark Reader settings |
 | [Neovim](docs/internals/neovim.md) | Anything under `modules/apps/neovim/` |
