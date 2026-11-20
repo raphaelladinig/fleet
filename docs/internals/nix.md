@@ -10,6 +10,15 @@
 `_`-prefixed directories such as `modules/_lib/`. Put helper functions there and
 import them explicitly.
 
+## Checking the flake
+
+`nix flake check` does not evaluate `darwinConfigurations`, so a mistyped
+`darwin` or `homeManager` option passes it. `just check` therefore also
+evaluates `darwinConfigurations.<host>.system.drvPath` for every host. That
+evaluates each full system, Home Manager included, without building it. A
+flake check would not fit here, because `nix flake check` builds checks and
+`systems` covers every system in `lib.systems.flakeExposed`.
+
 ## Agent tools and skills
 
 Claude Code and Codex come from numtide's `llm-agents` flake in
