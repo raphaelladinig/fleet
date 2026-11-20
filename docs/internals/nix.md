@@ -25,6 +25,14 @@ links every directory under its `skills/` into `~/.claude/skills` and
 Keep shared nixpkgs settings in `modules/nixpkgs.nix`. Its `perSystem` package
 set and Darwin aspect use the same configuration and overlays.
 
+## Home Manager backups
+
+Tools such as `git config --global` replace a managed symlink with a regular
+file. On the next activation Home Manager moves that file to `<name>.backup`.
+`modules/home-manager.nix` sets `overwriteBackup`, so an existing `.backup` is
+deleted and replaced by the newer file. Only the latest backup survives.
+Without that option, an existing `.backup` aborts activation.
+
 ## Garbage collection
 
 `modules/nix-settings.nix` schedules Nix garbage collection daily at 04:00 local
