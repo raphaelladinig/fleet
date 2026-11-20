@@ -1,0 +1,55 @@
+{
+  "$schema" : "https:\/\/schema.linearmouse.app\/0.11.4",
+  "schemes" : [
+    {
+      "if" : {
+        "device" : {
+          "category" : "mouse",
+          "productID" : "0xc548",
+          "productName" : "USB Receiver",
+          "vendorID" : "0x46d"
+        }
+      },
+      "scrolling" : {
+        "reverse" : {
+          "vertical" : true
+        }
+      }
+    },
+    {
+      "if" : {
+        "device" : {
+          "category" : "mouse",
+          "productID" : "0xc332",
+          "productName" : "Gaming Mouse G502",
+          "serialNumber" : "058F38623635",
+          "vendorID" : "0x46d"
+        }
+      },
+      "scrolling" : {
+        "acceleration" : {
+          "vertical" : 0
+        },
+        "reverse" : {
+          "vertical" : true
+        }
+      }
+    },
+    {
+      "if" : {
+        "app" : "com.riotgames.LeagueofLegends.LeagueClientUx",
+        "device" : {
+          "category" : "mouse",
+          "productID" : "0xc332",
+          "productName" : "Gaming Mouse G502",
+          "serialNumber" : "058F38623635",
+          "vendorID" : "0x46d"
+        }
+      },
+      "pointer" : {
+        "acceleration" : 9.2539,
+        "speed" : 1
+      }
+    }
+  ]
+}
