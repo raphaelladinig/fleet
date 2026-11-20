@@ -41,5 +41,8 @@
       config.home.stateVersion = "26.05";
     };
 
+  # User aspects carry darwin content, such as Homebrew casks, that belongs on
+  # the user's host.
+  den.schema.host.includes = [ den.batteries.user-aspects ];
   den.schema.user.classes = lib.mkDefault [ "homeManager" ];
 }
