@@ -9,8 +9,10 @@
     domain = "com.superlogical.rex";
     processName = "Rex";
     preferences = {
-      SUAutomaticallyUpdate = true;
-      SUEnableAutomaticChecks = true;
+      # Sparkle would update the Home Manager copy in place, and the next switch
+      # restores the pinned build. Update by bumping the pin below.
+      SUAutomaticallyUpdate = false;
+      SUEnableAutomaticChecks = false;
       "Workspace.activityGrouping" = "priority";
       "Workspace.appIcon" = "default";
       "Workspace.appearance" = "system";
@@ -37,12 +39,15 @@
   den.aspects.apps.rex.homeManager =
     { pkgs, ... }:
     let
+      # Rex has no Homebrew cask. To update, take the newest enclosure URL from
+      # https://blob.superlogical.com/public/rex-app/preview/appcast.xml and set
+      # the URL, version, and hash. The latest.dmg URL changes with each release.
       rex = pkgs.stdenvNoCC.mkDerivation {
         pname = "rex";
-        version = "0.1.0-preview.32";
+        version = "0.1.0-2042";
 
         src = pkgs.fetchurl {
-          url = "https://blob.superlogical.com/download/rex-app/preview/latest.dmg";
+          url = "https://blob.superlogical.com/public/rex-app/preview/Rex-0.1.0-2042.dmg";
           name = "Rex.dmg";
           hash = "sha256-Pw+ZqxjvH4p4BYmW/M+pD1XOZZDmjhV5ckQaoahJ0ik=";
         };

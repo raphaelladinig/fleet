@@ -54,7 +54,9 @@ internals file for an area before changing it.
   files to an existing module, move its entry point and update its relative
   paths.
 - Declare an app's shared dependencies through its aspect's `includes`.
-- Install macOS GUI apps as Homebrew casks and CLI tools from Nix.
+- Install macOS GUI apps as Homebrew casks and CLI tools from Nix. Rex has no
+  cask, so `modules/apps/rex.nix` pins a versioned DMG and turns off Sparkle
+  updates.
 - Declare cross-aspect `dotfiles.*` flags in `modules/defaults.nix` so consumers
   can read them when the providing aspect is absent. Follow the KeePassXC flag
   pattern. Keep feature-local options in their owning module.
