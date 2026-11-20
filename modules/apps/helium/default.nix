@@ -22,9 +22,12 @@
       extensionPython = pkgs.python3.withPackages (ps: [ ps.plyvel ]);
       applyPreferences = asUser "${pkgs.python3}/bin/python3 ${./apply-preferences.py}";
       applyDarkReader = asUser "${extensionPython}/bin/python3 ${./apply-dark-reader.py}";
-      preferencesPath = lib.escapeShellArg "${userDataDir}/Default/Preferences";
-      localStatePath = lib.escapeShellArg "${userDataDir}/Local State";
+      preferencesArgs = "--seed ${./preferences-seed.json} ${lib.escapeShellArg "${userDataDir}/Default/Preferences"} ${./preferences.json}";
+      localStateArgs = "${lib.escapeShellArg "${userDataDir}/Local State"} ${./local-state.json}";
       profilePath = lib.escapeShellArg "${userDataDir}/Default";
+      uncheckedWarning =
+        target:
+        ''printf '\033[1;33m%s\033[0m\n' ${lib.escapeShellArg "Could not inspect Helium ${target}, so activation skipped it. Check the error above, fix access or file contents, and run `just switch` again."} >&2'';
     in
     {
       homebrew.casks = [ "helium-browser" ];
@@ -44,11 +47,26 @@
       };
 
       system.activationScripts.postActivation.text = lib.mkAfter ''
-        # Helium rewrites these files while running, so quit it only when they differ.
-        if ! {
-          ${applyPreferences} --check ${preferencesPath} ${./preferences.json} 2>/dev/null &&
-            ${applyPreferences} --check ${localStatePath} ${./local-state.json} 2>/dev/null &&
-            ${applyDarkReader} --check ${profilePath} 2>/dev/null
+        # Helium rewrites these files while running, so quit it only when a check
+        # reports drift. Checks exit 0 on a match, 1 on drift, and 2 when they
+        # could not inspect the file, which skips that file's writer.
+        helium_preferences_status=0
+        ${applyPreferences} --check ${preferencesArgs} || helium_preferences_status=$?
+        helium_local_state_status=0
+        ${applyPreferences} --check ${localStateArgs} || helium_local_state_status=$?
+        helium_dark_reader_status=0
+        ${applyDarkReader} --check ${profilePath} || helium_dark_reader_status=$?
+        if [[ "$helium_preferences_status" -gt 1 ]]; then
+          ${uncheckedWarning "preferences at ${userDataDir}/Default/Preferences"}
+        fi
+        if [[ "$helium_local_state_status" -gt 1 ]]; then
+          ${uncheckedWarning "Local State at ${userDataDir}/Local State"}
+        fi
+        if [[ "$helium_dark_reader_status" -gt 1 ]]; then
+          ${uncheckedWarning "Dark Reader settings under ${userDataDir}/Default"}
+        fi
+        if {
+          [[ "$helium_preferences_status" -eq 1 || "$helium_local_state_status" -eq 1 || "$helium_dark_reader_status" -eq 1 ]]
         } && ${
           quitApp {
             processName = "Helium";
@@ -57,13 +75,13 @@
             run = asUser;
           }
         }; then
-          if ! ${applyPreferences} ${preferencesPath} ${./preferences.json}; then
+          if [[ "$helium_preferences_status" -le 1 ]] && ! ${applyPreferences} ${preferencesArgs}; then
             printf '%s\n' ${lib.escapeShellArg "Could not apply Helium preferences at ${userDataDir}/Default/Preferences. Check the error above, fix access or file contents, and run `just switch` again."} >&2
           fi
-          if ! ${applyPreferences} ${localStatePath} ${./local-state.json}; then
+          if [[ "$helium_local_state_status" -le 1 ]] && ! ${applyPreferences} ${localStateArgs}; then
             printf '%s\n' ${lib.escapeShellArg "Could not apply Helium Local State at ${userDataDir}/Local State. Check the error above, fix access or file contents, and run `just switch` again."} >&2
           fi
-          if ! ${applyDarkReader} ${profilePath}; then
+          if [[ "$helium_dark_reader_status" -le 1 ]] && ! ${applyDarkReader} ${profilePath}; then
             printf '%s\n' ${lib.escapeShellArg "Could not apply Helium Dark Reader settings under ${userDataDir}/Default. Check the error above, fix access or close processes using its extension databases, and run `just switch` again."} >&2
           fi
         fi
