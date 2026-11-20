@@ -68,11 +68,12 @@ profile's local and sync extension stores.
   escaping grows them. The script sizes each chunk by its encoded form and
   splits between characters, never inside one.
 - Chromium also caps the whole sync store at 102,400 bytes and 512 items,
-  counting every item already there. When the sync writes would pass either
-  limit, the script does what Dark Reader does when sync rejects a write. It
-  leaves the sync store alone, copies the sync settings with full lists into
-  the local store, and sets the local `syncSettings` to `false`. While local
-  `syncSettings` is `false`, Dark Reader reads only the local store, so the
-  script skips the sync store.
+  counting every item already there. When the store would pass either limit
+  after the pending writes, including a store that is already over a limit
+  with nothing pending, the script does what Dark Reader does when sync
+  rejects a write. It leaves the sync store alone, copies the sync settings
+  with full lists into the local store, and sets the local `syncSettings` to
+  `false`. While local `syncSettings` is `false`, Dark Reader reads only the
+  local store, so the script skips the sync store.
 - Otherwise each store migrates independently, so mixed versions and fresh
   stores keep the declared mode after Dark Reader starts.
