@@ -91,8 +91,7 @@
           if [[ "''$${prefix}_preferences_changed" == true ]]; then
             if ${
               quitApp {
-                inherit processName bundleId;
-                uid = "''$${prefix}_user_id";
+                inherit processName bundleId user;
                 run = runAsUser;
               }
             }; then

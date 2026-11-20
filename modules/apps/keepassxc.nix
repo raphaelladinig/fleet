@@ -85,7 +85,7 @@
           quitApp {
             processName = "KeePassXC";
             bundleId = "org.keepassxc.keepassxc";
-            uid = "$(id -u)";
+            user = config.home.username;
           }
         }; then
           exit 0

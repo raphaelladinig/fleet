@@ -8,10 +8,19 @@ background afterwards.
 - `modules/_lib/quit-app.nix` provides `quitApp`, which quits a running app
   through its bundle ID, waits up to 30 seconds, and queues it in
   `app_preferences_reopen`. `reopenApps` reopens the queue.
+- `quitApp` takes the user name and looks up the UID itself. Pass a Nix string,
+  not a shell fragment. A double-quoted Nix string that held a shell variable
+  once reached `pgrep` as literal text, so the helper never saw a running app.
 - Quit an app only after checking that its settings differ, so unchanged apps
   keep running.
 - If an app does not quit, the helper warns once per app and the writers skip
   it.
+- If the app's process is an ancestor of the activation, such as the terminal
+  running `just switch`, the helper skips the quit with a warning and treats it
+  as a failed quit. Quitting it would end activation partway through. The
+  helper calls `pgrep -a`, because macOS `pgrep` otherwise hides its own
+  ancestors. A terminal whose shells run under a detached server outside the
+  app's process tree, as Rex's do, is not detected this way.
 - macOS may ask the terminal for Automation permission the first time.
 
 ## Scalar defaults

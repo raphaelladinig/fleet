@@ -53,7 +53,7 @@
           quitApp {
             processName = "Helium";
             bundleId = "net.imput.helium";
-            uid = "$(id -u -- ${lib.escapeShellArg user})";
+            inherit user;
             run = asUser;
           }
         }; then
