@@ -57,7 +57,8 @@ profile's local and sync extension stores.
 
 - Its `--check` mode reads copies of the stores, because a running Helium holds
   the LevelDB lock. A copy can fail while Helium compacts a store, so read
-  errors exit 2. A missing store directory exits 1, and the writer creates it.
+  errors exit 2. A missing store directory reads as empty, and the writer
+  creates it.
 - It migrates legacy site lists using their original mode before setting the
   new mode and schema version.
 - It preserves existing modern lists, sync list chunks, legacy entries, and
@@ -66,5 +67,12 @@ profile's local and sync extension stores.
   value as Chromium's JSON writer encodes it. Chunks are JSON strings, so
   escaping grows them. The script sizes each chunk by its encoded form and
   splits between characters, never inside one.
-- Each store migrates independently, so mixed versions and fresh stores keep the
-  declared mode after Dark Reader starts.
+- Chromium also caps the whole sync store at 102,400 bytes and 512 items,
+  counting every item already there. When the sync writes would pass either
+  limit, the script does what Dark Reader does when sync rejects a write. It
+  leaves the sync store alone, copies the sync settings with full lists into
+  the local store, and sets the local `syncSettings` to `false`. While local
+  `syncSettings` is `false`, Dark Reader reads only the local store, so the
+  script skips the sync store.
+- Otherwise each store migrates independently, so mixed versions and fresh
+  stores keep the declared mode after Dark Reader starts.
