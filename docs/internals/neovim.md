@@ -18,6 +18,12 @@ Read `modules/apps/neovim/default.nix` and `init.lua` before adding a feature.
   checks skip the feature without an error.
 - Keep lazy triggers aligned with bundled server filetypes and formatter
   mappings.
+- `settings.lua` loads a project's `.nvim/init.lua` and applies each
+  `.nvim/lsp/<server>.lua` through `vim.lsp.config(<server>, ...)`. Each file
+  runs only after `vim.secure.read(file)` trusts its current contents, so an
+  edit prompts again. Never trust the `.nvim` directory or add it to the
+  runtimepath. Neovim trusts directories by name only, and the runtimepath
+  would load `plugin/`, `ftplugin/`, and `lua/my/` modules unchecked.
 - Luacheck captures each buffer's filename and project config directory when
   lint starts.
 - Configuration files are linked through `home.file`, so edits take effect after
