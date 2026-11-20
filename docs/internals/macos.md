@@ -25,6 +25,11 @@ hidden one. This macOS version stores 2 for shown items, so
 the `power` activation script, once for battery and once for the power adapter.
 The script reads `pmset -g custom` and changes only the values that differ.
 
+The screen lock delay is not set by activation. `sysadminctl -screenLock`
+refuses to change it without the user's password and still exits 0. Activation
+reads the status as the user and prints the fix command when the delay is not
+immediate.
+
 ## Colemak-DH and input sources
 
 `modules/macos/colemak-dh.nix` installs the `colemak-dh` cask and selects the
