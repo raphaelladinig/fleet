@@ -26,6 +26,13 @@ Read `modules/apps/neovim/default.nix` and `init.lua` before adding a feature.
   would load `plugin/`, `ftplugin/`, and `lua/my/` modules unchecked.
 - Luacheck captures each buffer's filename and project config directory when
   lint starts.
+- Luacheck executes `.luacheckrc` as Lua, so the linter passes a project
+  `.luacheckrc` only when the vim.secure trust database holds its current hash.
+  Otherwise it passes `--no-config`, because without a flag luacheck searches
+  upward from the working directory. An untrusted file triggers one deferred
+  `vim.secure.read` prompt per file version; trust it with `:trust` from the
+  file's buffer. Editing the file revokes trust. Files under `.nvim/` never use
+  a `.luacheckrc`.
 - Tree-sitter maps must not shadow builtins used in prose buffers. The scope
   text object is `av` with motions `]v` and `[v`, and the fold motions are `]Z`
   and `[Z`, leaving `as`, `]s`, and `]z` to Vim. Check new keys against
