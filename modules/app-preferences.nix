@@ -10,9 +10,7 @@
     let
       inherit (import ./_lib/quit-app.nix { inherit lib; }) quitApp reopenApps;
       user = config.system.primaryUser;
-      runAsUser =
-        command:
-        ''launchctl asuser "$(id -u -- ${lib.escapeShellArg user})" sudo --user=${lib.escapeShellArg user} --set-home -- ${command}'';
+      runAsUser = (import ./_lib/run-as-user.nix { inherit lib; }).runAsUser { inherit user; };
       applyPreferences =
         {
           prefix,

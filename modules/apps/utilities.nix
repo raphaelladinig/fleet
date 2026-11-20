@@ -8,6 +8,7 @@
       "equinox"
       "finetune"
       "istat-menus"
+      "middledrag"
       "shottr"
       "tailscale-app"
       "vicinae"

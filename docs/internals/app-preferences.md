@@ -22,6 +22,13 @@ background afterwards.
   ancestors. A terminal whose shells run under a detached server outside the
   app's process tree, as Rex's do, is not detected this way.
 - macOS may ask the terminal for Automation permission the first time.
+- `modules/_lib/run-as-user.nix` provides `runAsUser`, which prefixes a command
+  so that it runs as the given user in that user's launchd session. Darwin
+  activation runs as root, so user defaults and files under the user's home
+  need it. It passes `--set-home` to `sudo` by default, so scripts that read
+  `HOME` find the user's files. The user defaults step in
+  `modules/macos/default.nix` passes `setHome = false`. It only runs
+  `defaults`, which finds the user's preferences whatever `HOME` holds.
 
 ## Restarting upgraded casks
 
@@ -95,36 +102,10 @@ A check that cannot read a settings file must not count as a difference, or
 every switch quits the app. Give the check a separate exit status for that case,
 warn, and skip that file's writer, as the Helium writers do.
 
-## Dock apps
+## LinearMouse
 
-`modules/macos/default.nix` sets the Dock's `persistent-apps` in its own step
-of the user defaults activation, not through `CustomUserPreferences`. Dock adds
-keys such as GUIDs to every tile it stores. Rewriting the list on each switch
-would change the Dock domain every time, and the restart check would then
-restart Dock on every switch. The step compares only the app paths and writes
-the list when they differ.
-
-## Menu bar items
-
-nix-darwin's `controlcenter` options write 18 for a shown item and 24 for a
-hidden one. This macOS version stores 2 for shown items, so
-`modules/macos/default.nix` writes the values directly to the ByHost
-`com.apple.controlcenter` domain through `CustomUserPreferences`.
-
-## Power settings
-
-Display sleep and power modes are set with `pmset` in the `power` activation
-script, once for battery and once for the power adapter. The script reads
-`pmset -g custom` and changes only the values that differ.
-
-## Input sources and LinearMouse
-
-`modules/apps/input/default.nix` selects the Colemak-DH layout through
-`com.apple.HIToolbox` and `com.apple.inputsources`. macOS may only pick up a
-changed input source list after logging out and back in.
-
-LinearMouse settings live in `modules/apps/input/linearmouse.json` and replace
-`~/.config/linearmouse/linearmouse.json` as a copy, because LinearMouse writes
-the file when its settings change. The activation compares parsed JSON, since
-LinearMouse rewrites the file in its own formatting, and quits LinearMouse
+LinearMouse settings live in `modules/apps/linearmouse/linearmouse.json` and
+replace `~/.config/linearmouse/linearmouse.json` as a copy, because LinearMouse
+writes the file when its settings change. The activation compares parsed JSON,
+since LinearMouse rewrites the file in its own formatting, and quits LinearMouse
 only when the content differs.

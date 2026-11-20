@@ -10,6 +10,8 @@
       {
         environment.shells = [ pkgs.fish ];
         programs.fish.enable = true;
+        # nix-darwin applies `users.users.<name>.shell` only to known users.
+        users.knownUsers = [ user.userName ];
         users.users.${user.userName}.shell = pkgs.fish;
       };
 
@@ -21,7 +23,7 @@
         ...
       }:
       {
-        home.file."${config.xdg.configHome}/fish/config.fish".source = ./config/config.fish;
+        home.file."${config.xdg.configHome}/fish/config.fish".source = ./config.fish;
 
         xdg.configFile."fish/conf.d/app-aliases.fish".text =
           lib.optionalString (lib.any (package: lib.getName package == "just") config.home.packages) ''

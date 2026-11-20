@@ -16,9 +16,7 @@
       inherit (import ../../_lib/quit-app.nix { inherit lib; }) quitApp;
       user = config.system.primaryUser;
       userDataDir = "${config.users.users.${user}.home}/Library/Application Support/net.imput.helium";
-      asUser =
-        command:
-        ''launchctl asuser "$(id -u -- ${lib.escapeShellArg user})" sudo --user=${lib.escapeShellArg user} --set-home -- ${command}'';
+      asUser = (import ../../_lib/run-as-user.nix { inherit lib; }).runAsUser { inherit user; };
       extensionPython = pkgs.python3.withPackages (ps: [ ps.plyvel ]);
       applyPreferences = asUser "${pkgs.python3}/bin/python3 ${./apply-preferences.py}";
       applyDarkReader = asUser "${extensionPython}/bin/python3 ${./apply-dark-reader.py}";

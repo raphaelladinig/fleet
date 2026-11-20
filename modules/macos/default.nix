@@ -14,9 +14,9 @@
       homeDirectory = config.users.users.${userName}.home;
       # Lossless, so the desktop renders exactly #000000.
       wallpaper = "${pkgs.runCommand "black.png" { nativeBuildInputs = [ pkgs.python3 ]; } ''
-        python3 ${./config/black-png.py} > $out
+        python3 ${./black-png.py} > $out
       ''}";
-      applyWallpaper = "${./config/apply-wallpaper.js}";
+      applyWallpaper = "${./apply-wallpaper.js}";
       wallpaperStore = "${homeDirectory}/Library/Application Support/com.apple.wallpaper/Store";
       dockApps = [
         "${homeDirectory}/Applications/Home Manager Apps/Rex.app"
@@ -25,9 +25,10 @@
         "/Applications/KeePassXC.app"
         "/System/Applications/Mail.app"
       ];
-      runAsUser =
-        command:
-        ''launchctl asuser "$(id -u -- ${lib.escapeShellArg userName})" sudo --user=${lib.escapeShellArg userName} -- ${command}'';
+      runAsUser = (import ../_lib/run-as-user.nix { inherit lib; }).runAsUser {
+        user = userName;
+        setHome = false;
+      };
     in
     {
       security.pam.services.sudo_local.touchIdAuth = true;

@@ -1,35 +1,10 @@
 { den, ... }:
 {
-  den.aspects.apps.input.includes = [ den.aspects.homebrew ];
+  den.aspects.apps.linearmouse.includes = [ den.aspects.homebrew ];
 
-  den.aspects.apps.input.darwin =
-    let
-      colemakDH = {
-        InputSourceKind = "Keyboard Layout";
-        "KeyboardLayout ID" = -7379;
-        "KeyboardLayout Name" = "Colemak DH ANSI";
-      };
-    in
-    {
-      homebrew.casks = [
-        "colemak-dh"
-        "linearmouse"
-        "middledrag"
-      ];
+  den.aspects.apps.linearmouse.darwin.homebrew.casks = [ "linearmouse" ];
 
-      system.defaults.CustomUserPreferences = {
-        "com.apple.inputsources".AppleEnabledThirdPartyInputSources = [ colemakDH ];
-        "com.apple.HIToolbox".AppleSelectedInputSources = [
-          {
-            "Bundle ID" = "com.apple.PressAndHold";
-            InputSourceKind = "Non Keyboard Input Method";
-          }
-          colemakDH
-        ];
-      };
-    };
-
-  den.aspects.apps.input.homeManager =
+  den.aspects.apps.linearmouse.homeManager =
     {
       config,
       lib,

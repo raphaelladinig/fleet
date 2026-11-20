@@ -1,15 +1,5 @@
 # Nix and flake inputs
 
-## Flake declarations
-
-`flake.nix` is generated and is not the source of truth. Edit
-`flake-file.inputs` and other flake declarations in `modules/`, then run
-`just write-flake`.
-
-`import-tree` discovers Nix modules recursively under `modules/` and skips
-`_`-prefixed directories such as `modules/_lib/`. Put helper functions there and
-import them explicitly.
-
 ## Checking the flake
 
 `nix flake check` does not evaluate `darwinConfigurations`, so a mistyped

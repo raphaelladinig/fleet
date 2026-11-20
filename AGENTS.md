@@ -35,6 +35,8 @@ internals file for an area before changing it.
   without configuration go in a group aspect by purpose, such as `apps.media`
   or `apps.utilities`. Give an app its own aspect once it gains configuration.
 - `modules/macos/` holds macOS system settings.
+- Aspects shared across areas sit at the top of `modules/`, such as
+  `modules/app-preferences.nix`, `modules/fonts.nix`, and `modules/homebrew/`.
 - `modules/ai/` installs agent instructions and skills.
   `modules/ai/agents-md/AGENTS.md` is the global instruction file it links into
   `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`. It does not apply to this
@@ -59,9 +61,7 @@ internals file for an area before changing it.
   files to an existing module, move its entry point and update its relative
   paths.
 - Declare an app's shared dependencies through its aspect's `includes`.
-- Install macOS GUI apps as Homebrew casks and CLI tools from Nix. Rex has no
-  cask, so `modules/apps/rex.nix` pins a versioned DMG and turns off Sparkle
-  updates.
+- Install macOS GUI apps as Homebrew casks and CLI tools from Nix.
 - Declare cross-aspect `dotfiles.*` flags in `modules/defaults.nix` so consumers
   can read them when the providing aspect is absent. Follow the KeePassXC flag
   pattern. Keep feature-local options in their owning module.
@@ -110,6 +110,7 @@ committing.
 | File | Read it when you change |
 | --- | --- |
 | [Nix and flake inputs](docs/internals/nix.md) | Flake inputs, the `just check` recipe, `llm-agents`, `tstack` skills, nixpkgs settings, Home Manager backups, garbage collection, or the Nix base template |
-| [App preferences](docs/internals/app-preferences.md) | macOS defaults, Dock apps, menu bar items, power settings, input sources, app-owned settings files such as KeePassXC and LinearMouse, the quit and reopen helpers, restarting upgraded casks, or Safari AutoFill |
+| [App preferences](docs/internals/app-preferences.md) | Scalar app defaults, app-owned settings files such as KeePassXC and LinearMouse, the quit, reopen, and run-as-user helpers, restarting upgraded casks, or Safari AutoFill |
+| [macOS](docs/internals/macos.md) | Dock apps, menu bar items, power settings, or the Colemak-DH layout and input sources |
 | [Helium](docs/internals/helium.md) | Helium preferences, extensions and the device management profile, or Dark Reader settings |
 | [Neovim](docs/internals/neovim.md) | Anything under `modules/apps/neovim/` |
