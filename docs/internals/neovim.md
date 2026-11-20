@@ -26,5 +26,9 @@ Read `modules/apps/neovim/default.nix` and `init.lua` before adding a feature.
   would load `plugin/`, `ftplugin/`, and `lua/my/` modules unchecked.
 - Luacheck captures each buffer's filename and project config directory when
   lint starts.
+- Tree-sitter maps must not shadow builtins used in prose buffers. The scope
+  text object is `av` with motions `]v` and `[v`, and the fold motions are `]Z`
+  and `[Z`, leaving `as`, `]s`, and `]z` to Vim. Check new keys against
+  `:help index` and `maparg()` in the built config.
 - Configuration files are linked through `home.file`, so edits take effect after
   a rebuild and activation.
