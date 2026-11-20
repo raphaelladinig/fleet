@@ -10,9 +10,9 @@
     den.aspects.apps.fish
     den.aspects.apps.git
     den.aspects.apps.helium
-    den.aspects.apps.input
     den.aspects.apps.keepassxc
     den.aspects.apps.lazygit
+    den.aspects.apps.linearmouse
     den.aspects.apps.llm-agents
     den.aspects.apps.media
     den.aspects.apps.neovim
@@ -22,5 +22,6 @@
     den.aspects.ai.agents-md
     den.aspects.ai.skills
     den.aspects.fonts
+    den.aspects.macos.colemak-dh
   ];
 }

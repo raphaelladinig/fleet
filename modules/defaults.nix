@@ -1,6 +1,7 @@
 { den, lib, ... }:
 {
   den.default.includes = [
+    den.aspects.home-manager
     den.aspects.nix-settings
     den.aspects.nixpkgs
   ];
