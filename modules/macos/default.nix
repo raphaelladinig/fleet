@@ -197,9 +197,9 @@
                 for path in desired
             ]
             sys.stdout.buffer.write(plistlib.dumps(tiles))
-            sys.exit(1)
+            sys.exit(3)
           ''} ${lib.escapeShellArgs dockApps}) || dock_apps_status=$?
-          if [[ "$dock_apps_status" -eq 1 ]]; then
+          if [[ "$dock_apps_status" -eq 3 ]]; then
             if ! ${runAsUser ''defaults write com.apple.dock persistent-apps "$dock_apps_plist"''}; then
               echo >&2 "Could not write the Dock apps. Run \`just switch\` again to apply them."
             fi
