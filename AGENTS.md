@@ -20,7 +20,8 @@ internals file for an area before changing it.
 3. **Leaving new files untracked.** The flake is Git-backed. A file Git does not
    track is invisible to it, so its module silently does nothing.
 4. **Broad dependency updates.** Keep dependency updates scoped to the task.
-   Update a single input with `nix flake update <input>`.
+   Update a single input with `just update <input>`. A bare `just update`
+   updates every input. Run it only when the user asks for a full update.
 
 ## Where code lives
 
