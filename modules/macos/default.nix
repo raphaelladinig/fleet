@@ -18,6 +18,16 @@
       ''}";
       applyWallpaper = "${./config/apply-wallpaper.js}";
       wallpaperStore = "${homeDirectory}/Library/Application Support/com.apple.wallpaper/Store";
+      dockApps = [
+        "${homeDirectory}/Applications/Home Manager Apps/Rex.app"
+        "/Applications/T3 Code (Nightly).app"
+        "/Applications/Helium.app"
+        "/Applications/KeePassXC.app"
+        "/System/Applications/Mail.app"
+      ];
+      runAsUser =
+        command:
+        ''launchctl asuser "$(id -u -- ${lib.escapeShellArg userName})" sudo --user=${lib.escapeShellArg userName} -- ${command}'';
     in
     {
       security.pam.services.sudo_local.touchIdAuth = true;
@@ -31,11 +41,41 @@
 
       system.defaults = {
         NSGlobalDomain = {
+          AppleInterfaceStyle = "Dark";
           AppleShowAllExtensions = true;
           AppleShowScrollBars = "WhenScrolling";
           NSAutomaticCapitalizationEnabled = true;
+          NSAutomaticDashSubstitutionEnabled = false;
+          NSAutomaticInlinePredictionEnabled = false;
           NSAutomaticPeriodSubstitutionEnabled = true;
+          NSAutomaticQuoteSubstitutionEnabled = false;
           NSTableViewDefaultSizeMode = 2;
+          "com.apple.trackpad.scaling" = 1.0;
+        };
+
+        CustomUserPreferences.NSGlobalDomain = {
+          NSGlassTintAmount = 1.0;
+          SLSMenuBarUseBlurredAppearance = true;
+        };
+
+        # nix-darwin's controlcenter options write 18 for a shown item, but
+        # this macOS version stores 2.
+        CustomUserPreferences."~${userName}/Library/Preferences/ByHost/com.apple.controlcenter" = {
+          Battery = 2;
+          Bluetooth = 2;
+          Display = 24;
+          FocusModes = 24;
+          Sound = 24;
+        };
+
+        CustomUserPreferences."com.apple.assistant.support" = {
+          "Assistant Enabled" = true;
+          "Dictation Enabled" = false;
+        };
+
+        CustomUserPreferences."com.apple.Siri" = {
+          StatusMenuVisible = false;
+          VoiceTriggerUserEnabled = false;
         };
 
         CustomUserPreferences."com.apple.dock" = {
@@ -113,24 +153,96 @@
         controlcenter.BatteryShowPercentage = true;
 
         hitoolbox.AppleFnUsageType = "Do Nothing";
+
+        menuExtraClock = {
+          ShowAMPM = true;
+          ShowDate = 2;
+          ShowDayOfWeek = false;
+        };
       };
 
       # nix-darwin restarts Dock unconditionally for system.defaults.dock.
       # Write those preferences above, then restart only when they changed.
       system.activationScripts.userDefaults.text = lib.mkMerge [
         (lib.mkBefore ''
-          dock_preferences_before=$(launchctl asuser "$(id -u -- ${lib.escapeShellArg userName})" \
-            sudo --user=${lib.escapeShellArg userName} -- defaults export com.apple.dock - 2>/dev/null) || dock_preferences_before=""
+          dock_preferences_before=$(${runAsUser "defaults export com.apple.dock -"} 2>/dev/null) || dock_preferences_before=""
         '')
+        # Dock adds its own keys to each tile, so rewriting persistent-apps on
+        # every switch would restart Dock every time. Compare app paths only.
+        ''
+          dock_apps_status=0
+          dock_apps_plist=$(printf '%s' "$dock_preferences_before" | ${lib.getExe pkgs.python3} -c ${lib.escapeShellArg ''
+            import plistlib, sys
+            from urllib.parse import unquote
+
+            try:
+                dock = plistlib.loads(sys.stdin.buffer.read())
+            except Exception:
+                sys.exit(2)
+
+            def app_path(tile):
+                url = tile.get("tile-data", {}).get("file-data", {}).get("_CFURLString", "")
+                if url.startswith("file://"):
+                    url = unquote(url[len("file://"):])
+                return url.rstrip("/")
+
+            desired = sys.argv[1:]
+            if [app_path(tile) for tile in dock.get("persistent-apps", [])] == desired:
+                sys.exit(0)
+            tiles = [
+                {
+                    "tile-data": {"file-data": {"_CFURLString": path, "_CFURLStringType": 0}},
+                    "tile-type": "file-tile",
+                }
+                for path in desired
+            ]
+            sys.stdout.buffer.write(plistlib.dumps(tiles))
+            sys.exit(3)
+          ''} ${lib.escapeShellArgs dockApps}) || dock_apps_status=$?
+          if [[ "$dock_apps_status" -eq 3 ]]; then
+            if ! ${runAsUser ''defaults write com.apple.dock persistent-apps "$dock_apps_plist"''}; then
+              echo >&2 "Could not write the Dock apps. Run \`just switch\` again to apply them."
+            fi
+          elif [[ "$dock_apps_status" -ne 0 ]]; then
+            echo >&2 "Could not read the Dock preferences, so the Dock apps were left unchanged."
+          fi
+        ''
         (lib.mkAfter ''
-          dock_preferences_after=$(launchctl asuser "$(id -u -- ${lib.escapeShellArg userName})" \
-            sudo --user=${lib.escapeShellArg userName} -- defaults export com.apple.dock - 2>/dev/null) || dock_preferences_after=""
+          dock_preferences_after=$(${runAsUser "defaults export com.apple.dock -"} 2>/dev/null) || dock_preferences_after=""
           if [[ -z "$dock_preferences_before" || -z "$dock_preferences_after" || "$dock_preferences_before" != "$dock_preferences_after" ]]; then
             echo >&2 "restarting Dock..."
             killall -qu ${lib.escapeShellArg userName} Dock || true
           fi
         '')
       ];
+
+      # pmset sets each power source separately and covers power modes, which
+      # nix-darwin has no option for. powermode 1 is Low Power, 2 is High Power.
+      system.activationScripts.power.text = lib.mkAfter ''
+        pmset_value() {
+          /usr/bin/pmset -g custom | /usr/bin/awk -v section="$1:" -v key="$2" '
+            /^[^ ]/ { in_section = ($0 == section); next }
+            in_section && $1 == key { print $2; exit }
+          '
+        }
+
+        apply_pmset() {
+          local flag="$1" section="$2" changes=()
+          shift 2
+          while (($# > 0)); do
+            if [[ "$(pmset_value "$section" "$1")" != "$2" ]]; then
+              changes+=("$1" "$2")
+            fi
+            shift 2
+          done
+          if ((''${#changes[@]} > 0)) && ! /usr/bin/pmset "$flag" "''${changes[@]}"; then
+            echo >&2 "Could not apply $section settings: ''${changes[*]}"
+          fi
+        }
+
+        apply_pmset -b "Battery Power" displaysleep 0 powermode 1
+        apply_pmset -c "AC Power" displaysleep 0 powermode 2
+      '';
 
       launchd.user.agents.apply-wallpaper = {
         script = ''

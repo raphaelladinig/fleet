@@ -108,6 +108,6 @@ committing.
 | File | Read it when you change |
 | --- | --- |
 | [Nix and flake inputs](docs/internals/nix.md) | Flake inputs, the `just check` recipe, `llm-agents`, `tstack` skills, nixpkgs settings, Home Manager backups, garbage collection, or the Nix base template |
-| [App preferences](docs/internals/app-preferences.md) | macOS defaults, app-owned settings files, the quit and reopen helpers, KeePassXC settings, or Safari AutoFill |
+| [App preferences](docs/internals/app-preferences.md) | macOS defaults, Dock apps, menu bar items, power settings, input sources, app-owned settings files such as KeePassXC and LinearMouse, the quit and reopen helpers, or Safari AutoFill |
 | [Helium](docs/internals/helium.md) | Helium preferences, extensions and the device management profile, or Dark Reader settings |
 | [Neovim](docs/internals/neovim.md) | Anything under `modules/apps/neovim/` |

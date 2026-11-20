@@ -69,3 +69,37 @@ access and reapply to enforce any settings that could not be written.
 A check that cannot read a settings file must not count as a difference, or
 every switch quits the app. Give the check a separate exit status for that case,
 warn, and skip that file's writer, as the Helium writers do.
+
+## Dock apps
+
+`modules/macos/default.nix` sets the Dock's `persistent-apps` in its own step
+of the user defaults activation, not through `CustomUserPreferences`. Dock adds
+keys such as GUIDs to every tile it stores. Rewriting the list on each switch
+would change the Dock domain every time, and the restart check would then
+restart Dock on every switch. The step compares only the app paths and writes
+the list when they differ.
+
+## Menu bar items
+
+nix-darwin's `controlcenter` options write 18 for a shown item and 24 for a
+hidden one. This macOS version stores 2 for shown items, so
+`modules/macos/default.nix` writes the values directly to the ByHost
+`com.apple.controlcenter` domain through `CustomUserPreferences`.
+
+## Power settings
+
+Display sleep and power modes are set with `pmset` in the `power` activation
+script, once for battery and once for the power adapter. The script reads
+`pmset -g custom` and changes only the values that differ.
+
+## Input sources and LinearMouse
+
+`modules/apps/input/default.nix` selects the Colemak-DH layout through
+`com.apple.HIToolbox` and `com.apple.inputsources`. macOS may only pick up a
+changed input source list after logging out and back in.
+
+LinearMouse settings live in `modules/apps/input/linearmouse.json` and replace
+`~/.config/linearmouse/linearmouse.json` as a copy, because LinearMouse writes
+the file when its settings change. The activation compares parsed JSON, since
+LinearMouse rewrites the file in its own formatting, and quits LinearMouse
+only when the content differs.
