@@ -60,7 +60,7 @@ local function run_trusted(file, apply)
       end
     end)
     if not ok then
-      vim.notify(err, vim.log.levels.ERROR)
+      vim.notify(tostring(err), vim.log.levels.ERROR)
     end
   end
 end
