@@ -7,6 +7,15 @@ Read `modules/apps/neovim/default.nix` and `init.lua` before adding a feature.
 - Language modules return `{ filetypes, setup }` and initialize on the first
   matching filetype.
 - Keep packages and plugins in Nix and runtime behavior in Lua.
+- The `lsp`, `formatting`, `linting`, `dap`, `editing`, and `treesitter`
+  aspects each have a `dotfiles.neovim.<name>.enable` flag. A flag is false
+  while its aspect is not included. `default.nix` writes the six values into
+  the generated `lua/my/features.lua`, and Lua code checks
+  `require("my.features").<name>` before using a feature.
+- A new flag needs a `mkAspectEnableOption` in `modules/defaults.nix`, a
+  `mkDefault true` and a `lib.mkIf` around its configuration in its aspect, and
+  an entry in the generated table. Without the entry, Lua reads `nil`, so `if`
+  checks skip the feature without an error.
 - Keep lazy triggers aligned with bundled server filetypes and formatter
   mappings.
 - Luacheck captures each buffer's filename and project config directory when
