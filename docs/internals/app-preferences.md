@@ -65,3 +65,7 @@ terminal running activation.
 
 Failed preference writes print a warning and allow activation to continue. Fix
 access and reapply to enforce any settings that could not be written.
+
+A check that cannot read a settings file must not count as a difference, or
+every switch quits the app. Give the check a separate exit status for that case,
+warn, and skip that file's writer, as the Helium writers do.

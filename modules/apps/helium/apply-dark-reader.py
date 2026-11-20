@@ -6,6 +6,9 @@ from pathlib import Path
 
 import plyvel
 
+# --check exit codes: 0 matches, 1 differs, CHECK_FAILED could not inspect.
+CHECK_FAILED = 2
+
 
 def chunk_key(key, index):
     suffix = ""
@@ -59,9 +62,7 @@ def pending_settings(database, sync):
     return {key: value for key, value in settings.items() if database.get(key) != value}
 
 
-def main():
-    check = sys.argv[1:2] == ["--check"]
-    profile = Path(sys.argv[-1])
+def main(check, profile):
     extension_id = "eimadpbcbfnmbkopoojfekhnkhdbieeh"
     for storage in ("Local Extension Settings", "Sync Extension Settings"):
         path = profile / storage / extension_id
@@ -88,4 +89,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    check = sys.argv[1:2] == ["--check"]
+    try:
+        main(check, Path(sys.argv[-1]))
+    except Exception as error:
+        if not check:
+            raise
+        print(f"Could not inspect Dark Reader stores in {sys.argv[-1]}: {error}", file=sys.stderr)
+        sys.exit(CHECK_FAILED)

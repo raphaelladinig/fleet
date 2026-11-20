@@ -9,8 +9,22 @@ and reopen helpers in [App preferences](app-preferences.md).
 exports. Keep account data, history, identifiers, and extension state out of
 these files.
 
-- Darwin activation runs each writer with `--check` first. When any reports a
-  difference, it quits Helium and merges them as the primary user.
+- Quitting Helium loses its open tabs, because no session restore is
+  configured. Only declare keys that the browser does not change in normal use.
+- Put UI state that Helium changes as you use it, such as the sidebar width,
+  collapsed sidebar, zen mode, and new tab page shortcuts, in
+  `preferences-seed.json`. The writer adds seed keys only when they are absent,
+  and `--check` ignores them, so changing them never quits Helium.
+- Declared lists, such as `browser.enabled_labs_experiments` and
+  `spellcheck.dictionaries`, list required members. The writer appends missing
+  items and keeps extra items and their order. Chromium reads lab flags as a
+  set. On macOS it resets the dictionary list when its first entry differs from
+  the system spellchecker language, so the writer never reorders it.
+- Darwin activation runs each writer with `--check` first. A check exits 0 when
+  the file matches, 1 when it differs, and 2 when it could not read the file.
+  When any check exits 1, activation quits Helium and runs the writers as the
+  primary user. A file whose check exited 2 gets a warning and no writer, and
+  never causes a quit.
 - All Helium preference writers run in the same activation shell, so the quit
   helper quits Helium at most once and emits one warning per app.
 - Search uses macOS recommended policies to avoid editing protected search
@@ -42,7 +56,8 @@ installed one.
 profile's local and sync extension stores.
 
 - Its `--check` mode reads copies of the stores, because a running Helium holds
-  the LevelDB lock.
+  the LevelDB lock. A copy can fail while Helium compacts a store, so read
+  errors exit 2. A missing store directory exits 1, and the writer creates it.
 - It migrates legacy site lists using their original mode before setting the
   new mode and schema version.
 - It preserves existing modern lists, sync list chunks, legacy entries, and

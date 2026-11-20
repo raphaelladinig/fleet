@@ -1,0 +1,16 @@
+{
+  "helium": {
+    "browser": {
+      "zen_mode": false
+    }
+  },
+  "vertical_tabs": {
+    "collapsed_state": false,
+    "uncollapsed_width": 223
+  },
+  "ntp": {
+    "custom_links_visible": false,
+    "shortcuts_visible": true,
+    "shortcuts_auto_removal_disabled": true
+  }
+}
