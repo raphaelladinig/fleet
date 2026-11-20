@@ -33,6 +33,7 @@
           formatting.enable = mkAspectEnableOption "Neovim formatting" den.aspects.apps.neovim.formatting;
           linting.enable = mkAspectEnableOption "Neovim linting" den.aspects.apps.neovim.linting;
           lsp.enable = mkAspectEnableOption "Neovim LSP" den.aspects.apps.neovim.lsp;
+          spell.enable = mkAspectEnableOption "Neovim spell files" den.aspects.apps.neovim.spell;
           treesitter.enable = mkAspectEnableOption "Neovim tree-sitter" den.aspects.apps.neovim.treesitter;
         };
       };

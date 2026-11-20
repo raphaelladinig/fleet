@@ -70,6 +70,7 @@
                 linting = ${lib.boolToString config.dotfiles.neovim.linting.enable},
                 dap = ${lib.boolToString config.dotfiles.neovim.dap.enable},
                 editing = ${lib.boolToString config.dotfiles.neovim.editing.enable},
+                spell = ${lib.boolToString config.dotfiles.neovim.spell.enable},
                 treesitter = ${lib.boolToString config.dotfiles.neovim.treesitter.enable},
               }
             '';
