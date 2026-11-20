@@ -7,6 +7,7 @@ alias c := check
 alias b := build
 alias s := switch
 alias u := update
+alias uc := update-commit
 alias w := write-flake
 
 # Run all checks, including evaluating each host's system, which `nix flake check` skips
@@ -30,6 +31,23 @@ switch hostname=host:
 
 update *inputs:
     nix flake update {{ if inputs == "" { "" } else { "-- " + replace(quote(inputs), ' ', "' '") } }}
+
+# Update every input, regenerate flake.nix, check, and commit only the flake files
+update-commit:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if ! git diff --quiet HEAD -- flake.lock flake.nix; then
+        echo "flake.lock or flake.nix has uncommitted changes" >&2
+        exit 1
+    fi
+    just update
+    just write-flake
+    if git diff --quiet HEAD -- flake.lock flake.nix; then
+        echo "Inputs are already up to date"
+        exit 0
+    fi
+    just check
+    git commit -m "chore(deps): update flake inputs" -- flake.lock flake.nix
 
 write-flake:
     nix run .#write-flake

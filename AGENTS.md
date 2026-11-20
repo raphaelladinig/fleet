@@ -22,6 +22,8 @@ internals file for an area before changing it.
 4. **Broad dependency updates.** Keep dependency updates scoped to the task.
    Update a single input with `just update <input>`. A bare `just update`
    updates every input. Run it only when the user asks for a full update.
+   `just update-commit` does the full update, regenerates `flake.nix`, runs
+   `just check`, and commits `flake.lock` and `flake.nix`. It does not push.
 
 ## Where code lives
 
