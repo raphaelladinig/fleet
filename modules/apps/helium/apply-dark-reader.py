@@ -18,6 +18,28 @@ def chunk_key(key, index):
     return key + b"_" + (suffix or "0").encode()
 
 
+def sync_json(value):
+    # Match Chromium's JSON writer, which the sync quota measures.
+    text = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    for char in "<\u2028\u2029":
+        text = text.replace(char, f"\\u{ord(char):04X}")
+    return text.encode()
+
+
+def split_for_sync(key, text):
+    # Keep each chunk key plus its JSON string within QUOTA_BYTES_PER_ITEM.
+    chunks = []
+    start, size = 0, 2
+    for end, char in enumerate(text):
+        char_size = len(sync_json(char)) - 2
+        if len(chunk_key(key, len(chunks))) + size + char_size > 8192:
+            chunks.append(text[start:end])
+            start, size = end, 2
+        size += char_size
+    chunks.append(text[start:])
+    return chunks
+
+
 def migrate_site_lists(database, sync):
     settings = {b"schemeVersion": b"2"}
     only_listed = json.loads(database.get(b"applyToListedOnly") or b"false")
@@ -36,19 +58,13 @@ def migrate_site_lists(database, sync):
                     for index in range(value["__meta_split_count"])
                 )
             )
-        serialized = json.dumps(
-            value if value is not None else [], separators=(",", ":")
-        ).encode()
-        # Match Dark Reader's sync quota and base-36 chunk keys.
+        serialized = sync_json(value if value is not None else [])
+        # Match Dark Reader's base-36 chunk keys, which it joins before parsing.
         if sync and len(key) + len(serialized) > 8192:
-            size = 8192 - len(key) - 3
-            chunks = [
-                serialized[start : start + size]
-                for start in range(0, len(serialized), size)
-            ]
+            chunks = split_for_sync(key, serialized.decode())
             for index, chunk in enumerate(chunks):
-                settings[chunk_key(key, index)] = json.dumps(chunk.decode()).encode()
-            serialized = json.dumps({"__meta_split_count": len(chunks)}).encode()
+                settings[chunk_key(key, index)] = sync_json(chunk)
+            serialized = sync_json({"__meta_split_count": len(chunks)})
         settings[key] = serialized
     return settings
 
