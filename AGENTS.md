@@ -49,7 +49,9 @@ internals file for an area before changing it.
   Discovery makes an aspect available; a host, user, or included aspect must
   select it. Follow `modules/hosts/` and `modules/users/` for that wiring.
 - Put system settings in an aspect's `darwin` module and user configuration in
-  its `homeManager` module. Request `config`, `pkgs`, and other class-specific
+  its `homeManager` module. A user aspect's `darwin` module reaches the host
+  through `den.batteries.user-aspects`, which `modules/defaults.nix` includes
+  on every host. Request `config`, `pkgs`, and other class-specific
   arguments inside that module's function.
 - Use `<name>.nix` for standalone modules. For modules with supporting files,
   keep the entry point at `<name>/default.nix` and the supporting files in that
