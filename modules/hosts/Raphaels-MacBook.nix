@@ -7,7 +7,7 @@
     ];
 
     darwin =
-      { config, lib, ... }:
+      { config, ... }:
       {
         networking = {
           computerName = "Raphael’s MacBook";
@@ -15,14 +15,10 @@
           localHostName = "Raphaels-MacBook";
         };
 
-        # nix-darwin only applies `users.users.<name>.shell` to accounts it
-        # manages via `users.knownUsers`; this account predates the config, so
-        # set the login shell directly with dscl.
-        system.activationScripts.users.text = lib.mkIf config.programs.fish.enable (
-          lib.mkAfter ''
-            dscl . -create ${lib.escapeShellArg "/Users/${config.system.primaryUser}"} UserShell /run/current-system/sw/bin/fish
-          ''
-        );
+        # nix-darwin applies `users.users.<name>.shell` only to known users.
+        # The uid must match the existing account, or nix-darwin skips it.
+        users.knownUsers = [ config.system.primaryUser ];
+        users.users.${config.system.primaryUser}.uid = 501;
       };
   };
 }
