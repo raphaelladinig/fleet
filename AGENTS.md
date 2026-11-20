@@ -68,10 +68,9 @@ Enter `nix develop` when repository tools are missing from the shell.
 
 | Change | Command |
 | --- | --- |
-| Any code or configuration | `just check` checks Nix formatting, Fish, JavaScript, and Python syntax, Lua linting and formatting, and the flake |
+| Any code or configuration | `just check` checks Nix formatting, Fish, JavaScript, and Python syntax, Lua linting and formatting, the flake, and the Nix base template |
 | Host configuration | `just check`, then `just build Raphaels-MacBook` to build without activating |
 | Applying the configuration, when the task asks | `just switch Raphaels-MacBook` |
-| The Nix base template | `nix flake check path:./modules/templates/_nix-base` |
 | Documentation only | Review the diff and verify referenced paths and commands. A rebuild is unnecessary |
 
 The flake host key matches the Unix and Bonjour local hostnames, so plain

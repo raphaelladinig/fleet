@@ -51,4 +51,13 @@ import-tree excludes its modules from the parent flake.
   configuration through `perSystem`.
 - Run its `just write-flake` from that directory when changing its dependency
   declarations.
-- Validate it with `nix flake check path:./modules/templates/_nix-base`.
+- The template is its own flake with its own `flake.lock`. Updating all of its
+  inputs at once is fine. The scoped-update rule in `AGENTS.md` covers only the
+  root lock.
+- After updating its inputs, run its `just write-flake` too. Newer flake-file
+  revisions change the generated header and default input URLs, and its
+  `check-flake-file` check fails until `flake.nix` is regenerated. Run
+  `nix flake lock` afterwards when a generated input URL changed.
+- Keep its `flake-file.url` the same as the root's in `modules/bootstrap.nix`.
+- The root `just check` runs
+  `nix flake check path:./modules/templates/_nix-base`.

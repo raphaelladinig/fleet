@@ -14,6 +14,7 @@ check:
     nix develop --command bash -euo pipefail -c 'fish -n modules/apps/fish/config/config.fish; (cd modules/apps/neovim && luacheck . && stylua --check .); node --check modules/macos/config/apply-wallpaper.js'
     nix develop --command python3 -B -c 'import sys; [compile(open(path, "rb").read(), path, "exec") for path in sys.argv[1:]]' $(find modules -name '*.py' -type f -print)
     nix flake check
+    nix flake check path:./modules/templates/_nix-base
 
 build hostname=host:
     nh darwin build . -H {{ hostname }}
