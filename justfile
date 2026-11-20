@@ -24,11 +24,12 @@ build hostname=host:
 switch hostname=host:
     nh darwin switch . -H {{ hostname }} --show-activation-logs
 
+# Without names, this updates every input.
 # just joins variadic arguments with spaces, so quote each name separately.
 # `--` keeps nix from reading a name such as `--flake` as an option.
 
-update +inputs:
-    nix flake update -- {{ replace(quote(inputs), ' ', "' '") }}
+update *inputs:
+    nix flake update {{ if inputs == "" { "" } else { "-- " + replace(quote(inputs), ' ', "' '") } }}
 
 write-flake:
     nix run .#write-flake
