@@ -47,3 +47,8 @@ messages. Preserve meaning and match the intended tone when editing.
   labels that repeat the text.
 - Before sending, reread for generic or mechanical phrasing. Rewrite anything
   that adds no concrete information or sounds unnatural.
+
+## Fleet
+
+My machines are listed in the
+[Machines section of the fleet README](https://github.com/raphaelladinig/fleet#machines).
