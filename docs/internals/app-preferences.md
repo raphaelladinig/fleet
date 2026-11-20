@@ -23,6 +23,31 @@ background afterwards.
   app's process tree, as Rex's do, is not detected this way.
 - macOS may ask the terminal for Automation permission the first time.
 
+## Restarting upgraded casks
+
+`modules/homebrew/restart-casks.py` restarts apps that `brew bundle` upgrades
+during activation. Without it, an upgraded app keeps running its old version,
+or stays closed when its cask quits it before replacing it.
+
+- Before `brew bundle`, the script records installed cask versions and the
+  PID and executable path of every process. Afterwards it handles only casks
+  whose version changed and whose app's `CFBundleExecutable` was running at
+  that first snapshot. Match that exact path. Bundles such as KeePassXC and
+  Vicinae keep other executables in `Contents/MacOS`, and KeePassXC's
+  `keepassxc-proxy` runs for browser integration while the app is closed.
+- If a recorded PID still runs, the app is quit through its bundle ID and
+  reopened in the background. If the app runs under a new PID, it already
+  relaunched on the new version and is left alone. If it is not running,
+  Homebrew quit it, and it is reopened. Apps that were not running stay
+  closed.
+- An app that runs the activation is skipped with a warning, like `quitApp`.
+- An EXIT trap runs the restart when `brew bundle` fails, because failure ends
+  activation after Homebrew may have quit an app.
+- Only `app` artifacts under `/Applications` or an absolute target are handled.
+  Casks that install through `pkg`, such as `tailscale-app`, are skipped.
+- `brew bundle` does not upgrade `auto_updates` casks unless they are greedy,
+  so most casks here update themselves and never reach this step.
+
 ## Scalar defaults
 
 Use `dotfiles.appPreferences` from `modules/app-preferences.nix` for scalar
