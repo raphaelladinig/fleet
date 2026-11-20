@@ -46,14 +46,25 @@ vim.opt.foldlevelstart = 99
 
 vim.diagnostic.config({ virtual_text = true })
 
+-- Trust each project file by content. Directory trust covers only the name, so
+-- .nvim stays off the runtimepath. See :h vim.secure.read().
+local function run_trusted(file)
+  local code = vim.secure.read(file)
+  if code then
+    return assert(load(code, "@" .. file))()
+  end
+end
+
 local exrc_root = vim.fs.root(vim.fn.getcwd(), ".nvim")
 if exrc_root then
   local exrc_dir = exrc_root .. "/.nvim"
-  if vim.secure.read(exrc_dir) then
-    vim.opt.runtimepath:append(exrc_dir)
-    local exrc = exrc_dir .. "/init.lua"
-    if vim.uv.fs_stat(exrc) then
-      assert(loadfile(exrc))()
+  for name, kind in vim.fs.dir(exrc_dir .. "/lsp") do
+    if kind == "file" and name:match("%.lua$") then
+      local config = run_trusted(exrc_dir .. "/lsp/" .. name)
+      if config then
+        vim.lsp.config(name:sub(1, -5), config)
+      end
     end
   end
+  run_trusted(exrc_dir .. "/init.lua")
 end
