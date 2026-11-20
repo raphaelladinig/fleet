@@ -64,21 +64,24 @@ def pending_settings(database, sync):
 
 def main(check, profile):
     extension_id = "eimadpbcbfnmbkopoojfekhnkhdbieeh"
+    drift = False
     for storage in ("Local Extension Settings", "Sync Extension Settings"):
         path = profile / storage / extension_id
         sync = storage == "Sync Extension Settings"
         if path.is_symlink():
             raise ValueError(f"Refusing to open symlink: {path}")
         if check:
-            if not path.is_dir():
-                sys.exit(1)
+            # The writer creates a missing store.
+            if not path.exists():
+                drift = True
+                continue
             # Read a copy because a running Helium holds the database lock.
             with tempfile.TemporaryDirectory() as directory:
                 copy = Path(directory) / "database"
                 shutil.copytree(path, copy, ignore=shutil.ignore_patterns("LOCK"))
                 with plyvel.DB(str(copy)) as database:
                     if pending_settings(database, sync):
-                        sys.exit(1)
+                        drift = True
             continue
         path.parent.mkdir(parents=True, exist_ok=True)
         with plyvel.DB(str(path), create_if_missing=True) as database:
@@ -86,6 +89,9 @@ def main(check, profile):
             with database.write_batch(sync=True) as batch:
                 for key, value in settings.items():
                     batch.put(key, value)
+    if check:
+        # Inspect every store before reporting drift, so a read error takes precedence.
+        sys.exit(1 if drift else 0)
 
 
 if __name__ == "__main__":
