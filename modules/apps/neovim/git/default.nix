@@ -15,7 +15,10 @@
       };
 
       config = lib.mkIf config.dotfiles.neovim.git.enable {
-        dotfiles.neovim.configFiles."lua/my/plugins/git.lua" = "git/git.lua";
+        dotfiles.neovim.configFiles = {
+          "lua/my/plugins/git.lua" = "git/git.lua";
+          "after/ftplugin/gitcommit.lua" = "git/gitcommit.lua";
+        };
 
         dotfiles.neovim.treesitterParsers = [
           "diff"

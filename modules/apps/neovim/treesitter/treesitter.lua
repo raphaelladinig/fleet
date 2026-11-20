@@ -8,15 +8,18 @@ end
 
 -- The textobjects move functions error in a buffer without a parser, so these
 -- maps are set per buffer once a parser starts. Other buffers keep Vim's
--- builtin `]s`, `]]`, `;`, `,` and the rest.
+-- builtin `]]`, `;`, `,` and the rest. Scope and fold motions use `]v` and
+-- `]Z` so `]s` (spelling) and `]z` (open fold) stay builtin everywhere.
 local motion_maps = {
   ["]m"] = move("goto_next_start", "@function.outer", "textobjects"),
   ["]]"] = move("goto_next_start", "@class.outer", "textobjects"),
   ["]o"] = move("goto_next_start", { "@loop.inner", "@loop.outer" }, "textobjects"),
-  ["]s"] = move("goto_next_start", "@local.scope", "locals"),
-  ["]z"] = move("goto_next_start", "@fold", "folds"),
+  ["]v"] = move("goto_next_start", "@local.scope", "locals"),
+  ["]Z"] = move("goto_next_start", "@fold", "folds"),
   ["]M"] = move("goto_next_end", "@function.outer", "textobjects"),
   ["]["] = move("goto_next_end", "@class.outer", "textobjects"),
+  ["[v"] = move("goto_previous_start", "@local.scope", "locals"),
+  ["[Z"] = move("goto_previous_start", "@fold", "folds"),
   ["[m"] = move("goto_previous_start", "@function.outer", "textobjects"),
   ["[["] = move("goto_previous_start", "@class.outer", "textobjects"),
   ["[M"] = move("goto_previous_end", "@function.outer", "textobjects"),
@@ -76,7 +79,7 @@ end)
 vim.keymap.set({ "x", "o" }, "ic", function()
   require("nvim-treesitter-textobjects.select").select_textobject("@class.inner", "textobjects")
 end)
-vim.keymap.set({ "x", "o" }, "as", function()
+vim.keymap.set({ "x", "o" }, "av", function()
   require("nvim-treesitter-textobjects.select").select_textobject("@local.scope", "locals")
 end)
 

@@ -7,10 +7,10 @@ Read `modules/apps/neovim/default.nix` and `init.lua` before adding a feature.
 - Language modules return `{ filetypes, setup }` and initialize on the first
   matching filetype.
 - Keep packages and plugins in Nix and runtime behavior in Lua.
-- The `lsp`, `formatting`, `linting`, `dap`, `editing`, and `treesitter`
-  aspects each have a `dotfiles.neovim.<name>.enable` flag. A flag is false
-  while its aspect is not included. `default.nix` writes the six values into
-  the generated `lua/my/features.lua`, and Lua code checks
+- The `lsp`, `formatting`, `linting`, `dap`, `editing`, `spell`, and
+  `treesitter` aspects each have a `dotfiles.neovim.<name>.enable` flag. A flag
+  is false while its aspect is not included. `default.nix` writes the seven
+  values into the generated `lua/my/features.lua`, and Lua code checks
   `require("my.features").<name>` before using a feature.
 - A new flag needs a `mkAspectEnableOption` in `modules/defaults.nix`, a
   `mkDefault true` and a `lib.mkIf` around its configuration in its aspect, and
@@ -26,5 +26,13 @@ Read `modules/apps/neovim/default.nix` and `init.lua` before adding a feature.
   would load `plugin/`, `ftplugin/`, and `lua/my/` modules unchecked.
 - Luacheck captures each buffer's filename and project config directory when
   lint starts.
+- Tree-sitter maps must not shadow builtins used in prose buffers. The scope
+  text object is `av` with motions `]v` and `[v`, and the fold motions are `]Z`
+  and `[Z`, leaving `as`, `]s`, and `]z` to Vim. Check new keys against
+  `:help index` and `maparg()` in the built config.
+- Prose ftplugins turn on `spell` window-locally and set `spelllang` per buffer.
+  German comes from the spell aspect's files, so ftplugins add `de` only when
+  `require("my.features").spell` is true. Without those files Neovim prompts to
+  download them.
 - Configuration files are linked through `home.file`, so edits take effect after
   a rebuild and activation.
