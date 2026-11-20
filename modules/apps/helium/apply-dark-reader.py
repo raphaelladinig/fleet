@@ -2,12 +2,18 @@ import json
 import shutil
 import sys
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 
 import plyvel
 
 # --check exit codes: 0 matches, 1 differs, CHECK_FAILED could not inspect.
 CHECK_FAILED = 2
+# chrome.storage.sync limits from Chromium's extensions/common/api/storage.json.
+QUOTA_BYTES = 102400
+QUOTA_BYTES_PER_ITEM = 8192
+MAX_ITEMS = 512
+LEGACY_KEYS = (b"siteList", b"siteListEnabled", b"applyToListedOnly")
 
 
 def chunk_key(key, index):
@@ -32,7 +38,7 @@ def split_for_sync(key, text):
     start, size = 0, 2
     for end, char in enumerate(text):
         char_size = len(sync_json(char)) - 2
-        if len(chunk_key(key, len(chunks))) + size + char_size > 8192:
+        if len(chunk_key(key, len(chunks))) + size + char_size > QUOTA_BYTES_PER_ITEM:
             chunks.append(text[start:end])
             start, size = end, 2
         size += char_size
@@ -60,7 +66,7 @@ def migrate_site_lists(database, sync):
             )
         serialized = sync_json(value if value is not None else [])
         # Match Dark Reader's base-36 chunk keys, which it joins before parsing.
-        if sync and len(key) + len(serialized) > 8192:
+        if sync and len(key) + len(serialized) > QUOTA_BYTES_PER_ITEM:
             chunks = split_for_sync(key, serialized.decode())
             for index, chunk in enumerate(chunks):
                 settings[chunk_key(key, index)] = sync_json(chunk)
@@ -78,35 +84,82 @@ def pending_settings(database, sync):
     return {key: value for key, value in settings.items() if database.get(key) != value}
 
 
-def main(check, profile):
-    extension_id = "eimadpbcbfnmbkopoojfekhnkhdbieeh"
-    drift = False
-    for storage in ("Local Extension Settings", "Sync Extension Settings"):
-        path = profile / storage / extension_id
-        sync = storage == "Sync Extension Settings"
-        if path.is_symlink():
-            raise ValueError(f"Refusing to open symlink: {path}")
-        if check:
-            # The writer creates a missing store.
-            if not path.exists():
-                drift = True
-                continue
-            # Read a copy because a running Helium holds the database lock.
-            with tempfile.TemporaryDirectory() as directory:
-                copy = Path(directory) / "database"
-                shutil.copytree(path, copy, ignore=shutil.ignore_patterns("LOCK"))
-                with plyvel.DB(str(copy)) as database:
-                    if pending_settings(database, sync):
-                        drift = True
-            continue
+def fits_sync_quota(database, settings):
+    # Chromium's quota enforcer counts every item in the store after the write.
+    items = dict(database.iterator())
+    items.update(settings)
+    total = sum(len(key) + len(sync_json(json.loads(value))) for key, value in items.items())
+    return total <= QUOTA_BYTES and len(items) <= MAX_ITEMS
+
+
+def synced_settings(database):
+    # Join split values the way Dark Reader's readSyncStorage does.
+    items = {key: json.loads(value) for key, value in database.iterator()}
+    chunks = set()
+    for key, value in list(items.items()):
+        if isinstance(value, dict) and "__meta_split_count" in value:
+            parts = [chunk_key(key, index) for index in range(value["__meta_split_count"])]
+            chunks.update(parts)
+            items[key] = json.loads("".join(items[part] for part in parts))
+    return {
+        key: sync_json(value)
+        for key, value in items.items()
+        if key not in chunks and key not in LEGACY_KEYS
+    }
+
+
+def pending_writes(local, sync):
+    local_settings = pending_settings(local, False)
+    sync_enabled = json.loads(local.get(b"syncSettings") or b"null")
+    if sync_enabled is not None and not sync_enabled:
+        # Dark Reader reads only the local store while sync is off.
+        return local_settings, {}
+    sync_settings = pending_settings(sync, True)
+    if fits_sync_quota(sync, sync_settings):
+        return local_settings, sync_settings
+    # Match Dark Reader's fallback when sync rejects a write: turn sync off and
+    # save the settings it read from sync, with full lists, to the local store.
+    settings = synced_settings(sync)
+    settings.update(pending_settings(sync, False))
+    settings[b"syncSettings"] = b"false"
+    return {key: value for key, value in settings.items() if local.get(key) != value}, {}
+
+
+@contextmanager
+def open_store(path, check):
+    if path.is_symlink():
+        raise ValueError(f"Refusing to open symlink: {path}")
+    if not check:
         path.parent.mkdir(parents=True, exist_ok=True)
         with plyvel.DB(str(path), create_if_missing=True) as database:
-            settings = pending_settings(database, sync)
-            with database.write_batch(sync=True) as batch:
-                for key, value in settings.items():
-                    batch.put(key, value)
+            yield database
+        return
+    # Read a copy because a running Helium holds the database lock.
+    with tempfile.TemporaryDirectory() as directory:
+        copy = Path(directory) / "database"
+        missing = not path.exists()
+        if not missing:
+            shutil.copytree(path, copy, ignore=shutil.ignore_patterns("LOCK"))
+        # A missing store reads as empty, as the writer would create it.
+        with plyvel.DB(str(copy), create_if_missing=missing) as database:
+            yield database
+
+
+def main(check, profile):
+    extension_id = "eimadpbcbfnmbkopoojfekhnkhdbieeh"
+    local_path = profile / "Local Extension Settings" / extension_id
+    sync_path = profile / "Sync Extension Settings" / extension_id
+    # Open both stores before reporting drift, so a read error takes precedence.
+    with open_store(local_path, check) as local, open_store(sync_path, check) as sync:
+        local_settings, sync_settings = pending_writes(local, sync)
+        if check:
+            drift = bool(local_settings or sync_settings)
+        else:
+            for database, settings in ((local, local_settings), (sync, sync_settings)):
+                with database.write_batch(sync=True) as batch:
+                    for key, value in settings.items():
+                        batch.put(key, value)
     if check:
-        # Inspect every store before reporting drift, so a read error takes precedence.
         sys.exit(1 if drift else 0)
 
 
