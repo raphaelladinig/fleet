@@ -241,8 +241,17 @@
           fi
         }
 
-        apply_pmset -b "Battery Power" displaysleep 0 powermode 1
-        apply_pmset -c "AC Power" displaysleep 0 powermode 2
+        apply_pmset -b "Battery Power" displaysleep 5 powermode 1
+        apply_pmset -c "AC Power" displaysleep 5 powermode 2
+      '';
+
+      # sysadminctl needs the user's password to change the screen lock delay,
+      # so activation only reports drift.
+      system.activationScripts.postActivation.text = lib.mkAfter ''
+        screen_lock_status=$(${runAsUser "/usr/sbin/sysadminctl -screenLock status"} 2>&1) || true
+        if [[ "$screen_lock_status" != *"screenLock delay is immediate"* ]]; then
+          echo >&2 "The screen lock delay is not immediate. Run \`sysadminctl -screenLock immediate -password -\` to fix it."
+        fi
       '';
 
       launchd.user.agents.apply-wallpaper = {
