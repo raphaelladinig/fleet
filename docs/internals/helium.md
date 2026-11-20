@@ -62,5 +62,9 @@ profile's local and sync extension stores.
   new mode and schema version.
 - It preserves existing modern lists, sync list chunks, legacy entries, and
   unrelated settings.
+- Chromium limits each sync item to 8,192 bytes, counting the key plus the
+  value as Chromium's JSON writer encodes it. Chunks are JSON strings, so
+  escaping grows them. The script sizes each chunk by its encoded form and
+  splits between characters, never inside one.
 - Each store migrates independently, so mixed versions and fresh stores keep the
   declared mode after Dark Reader starts.
