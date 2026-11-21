@@ -24,6 +24,11 @@ Read `modules/apps/neovim/default.nix` and `init.lua` before adding a feature.
   edit prompts again. Never trust the `.nvim` directory or add it to the
   runtimepath. Neovim trusts directories by name only, and the runtimepath
   would load `plugin/`, `ftplugin/`, and `lua/my/` modules unchecked.
+- `.stylua.toml` and `.luacheckrc` sit at the repository root so they cover
+  this repository's `.nvim/` as well as `modules/apps/neovim/`. `just check`
+  names both directories, so add any new Lua location to that recipe.
+  `.luarc.json` stays in `modules/apps/neovim/`, which keeps that directory the
+  lua_ls root.
 - Luacheck captures each buffer's filename and project config directory when
   lint starts.
 - Luacheck executes `.luacheckrc` as Lua, so the linter passes a project
@@ -31,8 +36,10 @@ Read `modules/apps/neovim/default.nix` and `init.lua` before adding a feature.
   Otherwise it passes `--no-config`, because without a flag luacheck searches
   upward from the working directory. An untrusted file triggers one deferred
   `vim.secure.read` prompt per file version; trust it with `:trust` from the
-  file's buffer. Editing the file revokes trust. Files under `.nvim/` never use
-  a `.luacheckrc`.
+  file's buffer. Editing or moving the file revokes trust. In the editor, files
+  under `.nvim/` never use a `.luacheckrc` and get `--globals=vim` instead.
+  `just check` lints them with the root file, so a global added there stays
+  undefined for `.nvim/` files in the editor.
 - Tree-sitter maps must not shadow builtins used in prose buffers. The scope
   text object is `av` with motions `]v` and `[v`, and the fold motions are `]Z`
   and `[Z`, leaving `as`, `]s`, and `]z` to Vim. Check new keys against

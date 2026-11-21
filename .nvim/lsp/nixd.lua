@@ -1,8 +1,8 @@
 return {
-	settings = {
-		nixd = {
-			nixpkgs = {
-				expr = [[
+  settings = {
+    nixd = {
+      nixpkgs = {
+        expr = [[
           let
             flake = builtins.getFlake (toString ./.);
           in
@@ -11,17 +11,18 @@ return {
             config.allowUnfree = true;
           }
         ]],
-			},
-			options = {
-				darwin = {
-					expr = '(builtins.getFlake(toString ./.)).darwinConfigurations."Raphaels-MacBook".options',
-				},
-				home_manager = {
-					expr = [[
-            (builtins.getFlake(toString ./.)).darwinConfigurations."Raphaels-MacBook".options.home-manager.users.type.getSubOptions []
+      },
+      options = {
+        darwin = {
+          expr = '(builtins.getFlake(toString ./.)).darwinConfigurations."Raphaels-MacBook".options',
+        },
+        home_manager = {
+          expr = [[
+            (builtins.getFlake(toString ./.)).darwinConfigurations."Raphaels-MacBook"
+              .options.home-manager.users.type.getSubOptions []
           ]],
-				},
-			},
-		},
-	},
+        },
+      },
+    },
+  },
 }

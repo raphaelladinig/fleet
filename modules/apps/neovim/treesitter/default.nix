@@ -26,7 +26,6 @@
             ))
             nvim-treesitter-textobjects
             nvim-treesitter-context
-            nvim-ts-autotag
           ];
 
           home.packages = [ pkgs.tree-sitter ];

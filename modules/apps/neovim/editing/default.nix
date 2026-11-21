@@ -15,10 +15,13 @@
         (lib.mkIf config.dotfiles.neovim.editing.enable {
           dotfiles.neovim.configFiles."lua/my/plugins/editing.lua" = "editing/editing.lua";
 
-          programs.neovim.plugins = with pkgs.vimPlugins; [
-            nvim-surround
-            nvim-autopairs
-            img-clip-nvim
+          programs.neovim.plugins = [
+            pkgs.vimPlugins.nvim-surround
+            pkgs.vimPlugins.nvim-autopairs
+            pkgs.vimPlugins.img-clip-nvim
+          ]
+          ++ lib.optionals config.dotfiles.neovim.treesitter.enable [
+            pkgs.vimPlugins.nvim-ts-autotag
           ];
 
           home.packages = [ pkgs.pngpaste ];
